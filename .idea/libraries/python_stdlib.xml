@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="python_stdlib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/node_modules/pyodide/python_stdlib.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
