@@ -3,8 +3,12 @@ import {
     INodeExecutionData,
     INodeType,
     INodeTypeDescription,
-    NodeOperationError,
 } from 'n8n-workflow';
+
+// Import refactored utilities and handlers
+import { getAccessToken, getThingsBoardCredentials, checkEditionSupport } from './utils/requestHandler';
+import { IOperationContext } from './utils/types';
+import { ResourceRegistry } from './utils/resourceRegistry';
 
 /**
  * -------------------------------
@@ -408,7 +412,7 @@ export class ThingsBoard implements INodeType {
                 default: '',
                 required: true,
                 description: 'A string value representing the customer ID. For example, "784f394c-42b6-435a-983c-b7beff2784f9".',
-                displayOptions: { show: { resource: ['customer', 'device', 'asset'], operation: ['getCustomerById', 'getCustomerDevices', 'getCustomerAssets', 'getCustomerDashboards', 'deleteCustomer'] } },
+                displayOptions: { show: { resource: ['customer', 'device', 'asset', 'dashboard'], operation: ['getCustomerById', 'getCustomerDevices', 'getCustomerAssets', 'getCustomerDashboards', 'deleteCustomer'] } },
             },
             {
                 displayName: 'Text Search',
@@ -467,7 +471,7 @@ export class ThingsBoard implements INodeType {
                 required: true,
                 default: '',
                 description: 'A string value representing the entity ID. For example, "784f394c-42b6-435a-983c-b7beff2784f9".',
-                displayOptions: { show: { resource: ['alarm', 'telemetry', 'entityGroup'], operation: ['getAlarms', 'getHighestAlarmSeverity', 'getTimeseries', 'getLatestTimeseries', 'getTimeseriesKeys', 'getAttributes', 'getAttributeKeys', 'getAttributeKeysByScope', 'getEntityGroupsForEntity'] } },
+                displayOptions: { show: { resource: ['alarm', 'telemetry', 'entityGroup'], operation: ['getAlarms', 'getHighestAlarmSeverity', 'getTimeseries', 'getLatestTimeseries', 'getTimeseriesKeys', 'getAttributes', 'getAttributeKeys', 'getAttributeKeysByScope', 'saveEntityAttributes', 'saveEntityTelemetry', 'saveEntityTelemetryWithTTL', 'deleteEntityAttributes', 'deleteEntityTimeseries', 'getEntityGroupsForEntity'] } },
             },
             {
                 displayName: 'Search Status',
@@ -523,16 +527,16 @@ export class ThingsBoard implements INodeType {
                 name: 'startTs',
                 type: 'string',
                 default: '',
-                description: 'The start timestamp in milliseconds of the search time range over the Alarm class field: "createdTime"',
-                displayOptions: { show: { resource: ['alarm'], operation: ['getAlarms', 'getAllAlarms'] } },
+                description: 'A long value representing the start timestamp of the time range in milliseconds, UTC',
+                displayOptions: { show: { resource: ['alarm', 'telemetry'], operation: ['getAlarms', 'getAllAlarms', 'getTimeseries'] } },
             },
             {
                 displayName: 'End Time',
                 name: 'endTs',
                 type: 'string',
                 default: '',
-                description: 'The end timestamp in milliseconds of the search time range over the Alarm class field: "createdTime"',
-                displayOptions: { show: { resource: ['alarm'], operation: ['getAlarms', 'getAllAlarms'] } },
+                description: 'A long value representing the end timestamp of the time range in milliseconds, UTC',
+                displayOptions: { show: { resource: ['alarm', 'telemetry'], operation: ['getAlarms', 'getAllAlarms', 'getTimeseries'] } },
             },
             {
                 displayName: 'Fetch Originator',
@@ -615,6 +619,13 @@ export class ThingsBoard implements INodeType {
                     { name: 'Attribute Keys', value: 'getAttributeKeys', action: 'Get attribute keys', description: 'Returns a set of unique attribute key names for the selected entity' },
                     { name: 'Attribute Keys (by Scope)', value: 'getAttributeKeysByScope', action: 'Get attribute keys by scope', description: 'Returns a set of unique attribute key names for the selected entity and scope' },
                     { name: 'Attributes', value: 'getAttributes', action: 'Get attributes', description: 'Returns a list of attributes for the selected entity' },
+                    { name: 'Delete Entity Attributes', value: 'deleteEntityAttributes', action: 'Delete entity attributes', description: 'Delete entity attributes by keys' },
+                    { name: 'Delete Device Attributes', value: 'deleteDeviceAttributes', action: 'Delete device attributes', description: 'Delete device attributes by keys' },
+                    { name: 'Delete Entity Timeseries', value: 'deleteEntityTimeseries', action: 'Delete entity timeseries', description: 'Delete entity time series data' },
+                    { name: 'Save Entity Attributes', value: 'saveEntityAttributes', action: 'Save entity attributes', description: 'Creates or updates entity attributes for any entity type' },
+                    { name: 'Save Device Attributes', value: 'saveDeviceAttributes', action: 'Save device attributes', description: 'Creates or updates device attributes' },
+                    { name: 'Save Entity Telemetry', value: 'saveEntityTelemetry', action: 'Save entity telemetry', description: 'Creates or updates entity time series data' },
+                    { name: 'Save Entity Telemetry with TTL', value: 'saveEntityTelemetryWithTTL', action: 'Save entity telemetry with ttl', description: 'Creates or updates entity time series data with TTL' },
                     { name: 'Timeseries (Latest)', value: 'getLatestTimeseries', action: 'Get latest timeseries', description: 'Returns the latest timeseries data for the selected entity' },
                     { name: 'Timeseries (Range)', value: 'getTimeseries', action: 'Get timeseries', description: 'Returns timeseries data for the selected entity within a specified range' },
                     { name: 'Timeseries Keys', value: 'getTimeseriesKeys', action: 'Get timeseries keys', description: 'Returns a set of unique timeseries key names for the selected entity' },
@@ -627,7 +638,7 @@ export class ThingsBoard implements INodeType {
                 type: 'string',
                 default: 'DEVICE',
                 description: 'A string value representing the entity type. For example, "DEVICE".',
-                displayOptions: { show: { resource: ['telemetry'], operation: ['getTimeseries', 'getLatestTimeseries', 'getTimeseriesKeys', 'getAttributes', 'getAttributeKeys', 'getAttributeKeysByScope'] } },
+                displayOptions: { show: { resource: ['telemetry'], operation: ['getTimeseries', 'getLatestTimeseries', 'getTimeseriesKeys', 'getAttributes', 'getAttributeKeys', 'getAttributeKeysByScope', 'saveEntityAttributes', 'saveEntityTelemetry', 'saveEntityTelemetryWithTTL', 'deleteEntityAttributes', 'deleteEntityTimeseries'] } },
             },
             {
                 displayName: 'Use Strict Data Types',
@@ -647,7 +658,33 @@ export class ThingsBoard implements INodeType {
                     { name: 'SHARED_SCOPE', value: 'SHARED_SCOPE' },
                 ],
                 default: 'SERVER_SCOPE',
+                description: 'Attribute scope for reading attributes. CLIENT_SCOPE is only supported for devices.',
                 displayOptions: { show: { resource: ['telemetry'], operation: ['getAttributesByScope', 'getAttributeKeysByScope'] } },
+            },
+            {
+                displayName: 'Attributes Scope',
+                name: 'scope',
+                type: 'options',
+                options: [
+                    { name: 'SERVER_SCOPE', value: 'SERVER_SCOPE' },
+                    { name: 'SHARED_SCOPE', value: 'SHARED_SCOPE' },
+                ],
+                default: 'SERVER_SCOPE',
+                description: 'Attribute scope for saving attributes. Only SERVER_SCOPE and SHARED_SCOPE are supported for save operations.',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['saveEntityAttributes', 'saveDeviceAttributes'] } },
+            },
+            {
+                displayName: 'Attributes Scope',
+                name: 'scope',
+                type: 'options',
+                options: [
+                    { name: 'CLIENT_SCOPE', value: 'CLIENT_SCOPE' },
+                    { name: 'SERVER_SCOPE', value: 'SERVER_SCOPE' },
+                    { name: 'SHARED_SCOPE', value: 'SHARED_SCOPE' },
+                ],
+                default: 'SERVER_SCOPE',
+                description: 'Attribute scope for deleting attributes. All scopes are supported for delete operations.',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityAttributes', 'deleteDeviceAttributes'] } },
             },
             {
                 displayName: 'Keys (Comma Separated)',
@@ -657,24 +694,6 @@ export class ThingsBoard implements INodeType {
                 default: 'temperature',
                 description: 'Comma-separated telemetry keys or attribute keys',
                 displayOptions: { show: { resource: ['telemetry'], operation: ['getTimeseries', 'getAttributes', 'getLatestTimeseries', 'getAttributes', 'getAttributesByScope'] } },
-            },
-            {
-                displayName: 'Start Ts',
-                name: 'startTs',
-                type: 'string',
-                required: true,
-                default: '0',
-                description: 'A long value representing the start timestamp of the time range in milliseconds, UTC',
-                displayOptions: { show: { resource: ['telemetry'], operation: ['getTimeseries'] } },
-            },
-            {
-                displayName: 'End Timestamp',
-                name: 'endTs',
-                type: 'string',
-                required: true,
-                default: '',
-                description: 'A long value representing the end timestamp of the time range in milliseconds, UTC',
-                displayOptions: { show: { resource: ['telemetry'], operation: ['getTimeseries'] } },
             },
             {
                 displayName: 'Aggregation',
@@ -740,6 +759,100 @@ export class ThingsBoard implements INodeType {
                 default: 50,
                 description: 'Max number of results to return',
                 displayOptions: { show: { resource: ['telemetry'], operation: ['getTimeseries'] } },
+            },
+            {
+                displayName: 'Device ID',
+                name: 'deviceId',
+                type: 'string',
+                required: true,
+                default: '',
+                description: 'A string value representing the device ID. For example, "784f394c-42b6-435a-983c-b7beff2784f9".',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['saveDeviceAttributes', 'deleteDeviceAttributes'] } },
+            },
+            {
+                displayName: 'Attributes JSON',
+                name: 'attributesJson',
+                type: 'json',
+                required: true,
+                default: '{"stringKey": "value1", "booleanKey": true, "doubleKey": 42.0, "longKey": 73}',
+                description: 'JSON object with key-value format of attributes to create or update. Supports string, boolean, number, and nested JSON values.',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['saveEntityAttributes', 'saveDeviceAttributes'] } },
+            },
+            {
+                displayName: 'Telemetry JSON',
+                name: 'telemetryJson',
+                type: 'json',
+                required: true,
+                default: '{"temperature": 26}',
+                description: 'Telemetry data in JSON format. Supports: 1) Simple format: {"temperature": 26}, 2) With timestamp: {"ts":1634712287000,"values":{"temperature":26}}, 3) Array: [{"ts":1634712287000,"values":{"temperature":26}}]',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['saveEntityTelemetry', 'saveEntityTelemetryWithTTL'] } },
+            },
+            {
+                displayName: 'TTL (Time to Live)',
+                name: 'ttl',
+                type: 'number',
+                typeOptions: { minValue: 0 },
+                default: 0,
+                description: 'Time to Live in milliseconds. Only affects Cassandra DB installations. Set to 0 for no TTL.',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['saveEntityTelemetryWithTTL'] } },
+            },
+            {
+                displayName: 'Attribute Keys (Comma Separated)',
+                name: 'attributeKeys',
+                type: 'string',
+                required: true,
+                default: '',
+                description: 'Comma-separated list of attribute keys to delete. For example: "temperature,humidity,status"',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityAttributes', 'deleteDeviceAttributes'] } },
+            },
+            {
+                displayName: 'Timeseries Keys (Comma Separated)',
+                name: 'timeseriesKeys',
+                type: 'string',
+                required: true,
+                default: '',
+                description: 'Comma-separated list of timeseries keys to delete. For example: "temperature,humidity,voltage"',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityTimeseries'] } },
+            },
+            {
+                displayName: 'Delete All Data for Keys',
+                name: 'deleteAllDataForKeys',
+                type: 'boolean',
+                default: false,
+                description: 'Whether to delete all data for selected keys. If false, only data in the specified time range will be deleted.',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityTimeseries'] } },
+            },
+            {
+                displayName: 'Start Timestamp',
+                name: 'deleteStartTs',
+                type: 'string',
+                default: '',
+                description: 'Start timestamp in milliseconds (UTC). Required when deleteAllDataForKeys is false.',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityTimeseries'], deleteAllDataForKeys: [false] } },
+            },
+            {
+                displayName: 'End Timestamp',
+                name: 'deleteEndTs',
+                type: 'string',
+                default: '',
+                description: 'End timestamp in milliseconds (UTC). Required when deleteAllDataForKeys is false.',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityTimeseries'], deleteAllDataForKeys: [false] } },
+            },
+            {
+                displayName: 'Delete Latest',
+                name: 'deleteLatest',
+                type: 'boolean',
+                default: true,
+                description: 'Whether to delete the latest telemetry value if its timestamp matches the time range',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityTimeseries'] } },
+            },
+            {
+                displayName: 'Rewrite Latest If Deleted',
+                name: 'rewriteLatestIfDeleted',
+                type: 'boolean',
+                default: false,
+                description: 'Whether to rewrite the latest value with the most recent value before the time range if the latest value was deleted',
+                displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityTimeseries'] } },
             },
             // -------- Entity Group operations --------
             {
@@ -923,1216 +1036,51 @@ export class ThingsBoard implements INodeType {
         ],
     };
 
-
     async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
         const items = this.getInputData();
         const results: INodeExecutionData[] = [];
 
         for (let i = 0; i < items.length; i++) {
-            const resource = this.getNodeParameter('resource', i) as string;
-            const operation = this.getNodeParameter('operation', i) as string;
-
-            const creds = await this.getCredentials('thingsBoardApi') as { baseUrl: string };
-            if (!creds || !creds.baseUrl) {
-                throw new NodeOperationError(this.getNode(), 'ThingsBoard credential `baseUrl` is missing. Open the node credentials and set the base URL (e.g. http://localhost:8080)');
-            }
-            creds.baseUrl = (creds.baseUrl as string).replace(/\/+$/g, '');
-            const token = await getAccessToken.call(this);
-
-            const edition = await getEdition.call(this);
-            if (edition === 'CE') {
-                const key = `${resource}:${operation}`;
-                if (PE_ONLY_OPERATIONS.has(key)) {
-                    throw new NodeOperationError(this.getNode(), `Operation "${operation}" for resource "${resource}" is available only in ThingsBoard PE edition.`);
-                }
-            }
-
-            if (resource === 'device' && operation === 'getDeviceById') {
-                const deviceId = this.getNodeParameter('deviceId', i) as string;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/device/${deviceId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'device' && operation === 'createDevice') {
-                const mode = this.getNodeParameter('deviceInputMode', i) as string;
-
-                let body: Record<string, unknown>;
-                const qs: Record<string, any> = {};
-
-                const accessTokenParam = this.getNodeParameter('deviceAccessToken', i, '') as string;
-                if (accessTokenParam) qs.accessToken = accessTokenParam;
-
-                if (mode === 'json') {
-                    const raw = this.getNodeParameter('deviceJson', i) as unknown;
-
-                    if (typeof raw === 'string') {
-                        try {
-                            body = JSON.parse(raw) as Record<string, unknown>;
-                        } catch (e) {
-                            throw new NodeOperationError(this.getNode(), `deviceJson must be valid JSON. ${(e as Error).message}`);
-                        }
-                    } else if (raw && typeof raw === 'object') {
-                        body = raw as Record<string, unknown>;
-                    } else {
-                        throw new NodeOperationError(this.getNode(), 'deviceJson must be a JSON object or JSON string.');
-                    }
-
-                } else {
-                    const name = this.getNodeParameter('deviceNameCreate', i) as string;
-                    const type = this.getNodeParameter('deviceTypeCreate', i) as string;
-                    const label = this.getNodeParameter('deviceLabel', i) as string;
-                    const customerId = this.getNodeParameter('customerIdDeviceCreate', i) as string;
-
-                    body = {
-                        name,
-                        type,
-                        ...(label ? { label } : {}),
-                        ...(customerId ? { customerId: { id: customerId } } : {}),
-                    };
-                }
-
-                const res = await this.helpers.request!({
-                    method: 'POST',
-                    uri: `${creds.baseUrl}/api/device`,
-                    qs,
-                    body,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'dashboard' && operation === 'createDashboard') {
-                const mode = this.getNodeParameter('dashboardInputMode', i) as string;
-
-                let body: Record<string, unknown>;
-
-                if (mode === 'json') {
-                    const raw = this.getNodeParameter('dashboardJson', i) as unknown;
-
-                    if (typeof raw === 'string') {
-                        try {
-                            body = JSON.parse(raw) as Record<string, unknown>;
-                        } catch (e) {
-                            throw new NodeOperationError(this.getNode(), `dashboardJson must be valid JSON. ${(e as Error).message}`);
-                        }
-                    } else if (raw && typeof raw === 'object') {
-                        body = raw as Record<string, unknown>;
-                    } else {
-                        throw new NodeOperationError(this.getNode(), 'dashboardJson must be a JSON object or JSON string.');
-                    }
-
-                } else {
-                    const title = this.getNodeParameter('dashboardTitle', i) as string;
-                    body = { title };
-                }
-
-                const res = await this.helpers.request!({
-                    method: 'POST',
-                    uri: `${creds.baseUrl}/api/dashboard`,
-                    body,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'device' && operation === 'deleteDevice') {
-                const deviceId = this.getNodeParameter('deviceId', i) as string;
-
-                await this.helpers.request!({
-                    method: 'DELETE',
-                    uri: `${creds.baseUrl}/api/device/${deviceId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: { deleted: true } });
-            }
-
-            if (resource === 'device' && operation === 'getTenantDevice') {
-                const deviceName = this.getNodeParameter('deviceName', i) as string;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/tenant/devices`,
-                    qs: { deviceName },
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'device' && operation === 'getTenantDevices') {
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const type = this.getNodeParameter('deviceType', i) as string;
-                const textSearch = this.getNodeParameter('deviceTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('deviceSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (type) qs.type = type;
-                qs.pageSize = pageSize;
-                qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/tenant/devices`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'device' && operation === 'getCustomerDevices') {
-                const customerId = this.getNodeParameter('customerIdRequired', i) as string;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const type = this.getNodeParameter('deviceType', i) as string;
-                const textSearch = this.getNodeParameter('deviceTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('deviceSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (type) qs.type = type;
-                qs.pageSize = pageSize;
-                qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/customer/${customerId}/devices`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'device' && operation === 'getUserDevices') {
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const type = this.getNodeParameter('deviceType', i) as string;
-                const textSearch = this.getNodeParameter('deviceTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('deviceSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (type) qs.type = type;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/user/devices`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'device' && operation === 'getDevicesByEntityGroupId') {
-                const entityGroupId = this.getNodeParameter('entityGroupId', i) as string;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('deviceTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('deviceSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/entityGroup/${entityGroupId}/devices`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'asset' && operation === 'getAssetById') {
-                const assetId = this.getNodeParameter('assetId', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/asset/${assetId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'asset' && operation === 'getTenantAsset') {
-                const assetName = this.getNodeParameter('assetName', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/tenant/assets?assetName=${encodeURIComponent(assetName)}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'asset' && operation === 'getTenantAssets') {
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const type = this.getNodeParameter('assetType', i) as string;
-                const textSearch = this.getNodeParameter('assetTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('assetSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (type) qs.type = type;
-                qs.pageSize = pageSize;
-                qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/tenant/assets`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'asset' && operation === 'createAsset') {
-                const mode = this.getNodeParameter('assetInputMode', i) as string;
-
-                let body: Record<string, unknown>;
-
-                if (mode === 'json') {
-                    const raw = this.getNodeParameter('assetJson', i) as unknown;
-
-                    if (typeof raw === 'string') {
-                        try {
-                            body = JSON.parse(raw) as Record<string, unknown>;
-                        } catch (e) {
-                            throw new NodeOperationError(this.getNode(), `assetJson must be valid JSON. ${(e as Error).message}`);
-                        }
-                    } else if (raw && typeof raw === 'object') {
-                        body = raw as Record<string, unknown>;
-                    } else {
-                        throw new NodeOperationError(this.getNode(), 'assetJson must be a JSON object or JSON string.');
-                    }
-
-                } else {
-                    const name = this.getNodeParameter('assetNameCreate', i) as string;
-                    const type = this.getNodeParameter('assetTypeCreate', i) as string;
-                    const label = this.getNodeParameter('assetLabel', i) as string;
-                    const customerId = this.getNodeParameter('customerIdAssetCreate', i) as string;
-
-                    body = {
-                        name,
-                        type,
-                        ...(label ? { label } : {}),
-                        ...(customerId ? { customerId: { id: customerId } } : {}),
-                    };
-                }
-                const qs: Record<string, any> = {};
-
-                const res = await this.helpers.request!({
-                    method: 'POST',
-                    uri: `${creds.baseUrl}/api/asset`,
-                    qs,
-                    body,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'asset' && operation === 'deleteAsset') {
-                const assetId = this.getNodeParameter('assetId', i) as string;
-                await this.helpers.request!({
-                    method: 'DELETE',
-                    uri: `${creds.baseUrl}/api/asset/${assetId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: { deleted: true } });
-            }
-
-            if (resource === 'asset' && operation === 'getCustomerAssets') {
-                const customerId = this.getNodeParameter('customerIdRequired', i) as string;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const assetType = this.getNodeParameter('assetType', i) as string;
-                const textSearch = this.getNodeParameter('assetTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('assetSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (assetType) qs.assetType = assetType;
-                qs.pageSize = pageSize;
-                qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/customer/${customerId}/assets`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'asset' && operation === 'getUserAssets') {
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const type = this.getNodeParameter('assetType', i) as string; // stays consistent with property name
-                const textSearch = this.getNodeParameter('assetTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('assetSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (type) qs.type = type;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/user/assets`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'asset' && operation === 'getAssetsByEntityGroupId') {
-                const entityGroupId = this.getNodeParameter('entityGroupId', i) as string;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('assetTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('assetSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/entityGroup/${entityGroupId}/assets`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'customer' && operation === 'getCustomerById') {
-                const customerId = this.getNodeParameter('customerIdRequired', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/customer/${customerId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'customer' && operation === 'createCustomer') {
-                const title = this.getNodeParameter('customerTitle', i) as string;
-                if (!title) {
-                    throw new NodeOperationError(this.getNode(), 'customerTitle is required to create a customer');
-                }
-
-                const body: any = { title };
-
-                const res = await this.helpers.request!({
-                    method: 'POST',
-                    uri: `${creds.baseUrl}/api/customer`,
-                    body,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'customer' && operation === 'deleteCustomer') {
-                const customerId = this.getNodeParameter('customerIdRequired', i) as string;
-                if (!customerId) {
-                    throw new NodeOperationError(this.getNode(), 'customerId is required to delete a customer');
-                }
-                await this.helpers.request!({
-                    method: 'DELETE',
-                    uri: `${creds.baseUrl}/api/customer/${customerId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: { deleted: true } });
-            }
-
-            if (resource === 'customer' && operation === 'getCustomers') {
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('customerTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('customerSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/customers`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'customer' && operation === 'getTenantCustomer') {
-                const customerTitle = this.getNodeParameter('customerTitle', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/tenant/customers?customerTitle=${encodeURIComponent(customerTitle)}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'customer' && operation === 'getCustomersByEntityGroupId') {
-                const entityGroupId = this.getNodeParameter('entityGroupId', i) as string;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('customerTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('customerSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/entityGroup/${entityGroupId}/customers`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'customer' && operation === 'getUserCustomers') {
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('customerTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('customerSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/user/customers`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'telemetry' && operation === 'getTimeseries') {
-                const entityType = this.getNodeParameter('entityType', i) as string;
-                const entityId = this.getNodeParameter('entityId', i) as string;
-                const keys = this.getNodeParameter('keys', i) as string;
-                const startTs = this.getNodeParameter('startTs', i) as string;
-                const endTs = this.getNodeParameter('endTs', i) as string;
-                const agg = this.getNodeParameter('agg', i) as string;
-                const interval = this.getNodeParameter('interval', i) as string;
-                const intervalType = this.getNodeParameter('intervalType', i) as string;
-                const timeZone = this.getNodeParameter('timeZone', i) as string;
-                const orderBy = this.getNodeParameter('orderBy', i) as string;
-                const limit = this.getNodeParameter('limit', i) as number;
-                const useStrictDataTypes = this.getNodeParameter('useStrictDataTypes', i) as boolean;
-
-                const qs: Record<string, string | number | boolean> = { keys, startTs, endTs, interval };
-                if (agg) qs.agg = agg;
-                if (orderBy) qs.orderBy = orderBy;
-                if (limit !== undefined && limit !== null) qs.limit = limit;
-                if (intervalType) qs.intervalType = intervalType;
-                if (timeZone) qs.timeZone = timeZone;
-                if (useStrictDataTypes !== undefined) qs.useStrictDataTypes = useStrictDataTypes;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/plugins/telemetry/${entityType}/${entityId}/values/timeseries`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'telemetry' && operation === 'getTimeseriesKeys') {
-                const entityType = this.getNodeParameter('entityType', i) as string;
-                const entityId = this.getNodeParameter('entityId', i) as string;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/plugins/telemetry/${entityType}/${entityId}/keys/timeseries`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: { timeseriesKeys: res } });
-            }
-
-            if (resource === 'telemetry' && operation === 'getLatestTimeseries') {
-                const entityType = this.getNodeParameter('entityType', i) as string;
-                const entityId = this.getNodeParameter('entityId', i) as string;
-                const keys = this.getNodeParameter('keys', i) as string;
-                const useStrictDataTypes = this.getNodeParameter('useStrictDataTypes', i) as boolean;
-
-                const qs: Record<string, string | boolean> = {};
-                if (keys) qs.keys = keys;
-                qs.useStrictDataTypes = useStrictDataTypes;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/plugins/telemetry/${entityType}/${entityId}/values/timeseries`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'telemetry' && operation === 'getAttributes') {
-                const entityType = this.getNodeParameter('entityType', i) as string;
-                const entityId = this.getNodeParameter('entityId', i) as string;
-                const keys = this.getNodeParameter('keys', i) as string;
-
-                const qs: Record<string, string> = {};
-                if (keys) qs.keys = keys;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/plugins/telemetry/${entityType}/${entityId}/values/attributes`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'telemetry' && operation === 'getAttributeKeys') {
-                const entityType = this.getNodeParameter('entityType', i) as string;
-                const entityId = this.getNodeParameter('entityId', i) as string;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/plugins/telemetry/${entityType}/${entityId}/keys/attributes`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: { attributeKeys: res } });
-            }
-
-            if (resource === 'telemetry' && operation === 'getAttributeKeysByScope') {
-                const entityType = this.getNodeParameter('entityType', i) as string;
-                const entityId = this.getNodeParameter('entityId', i) as string;
-                const scope = this.getNodeParameter('scope', i) as string;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/plugins/telemetry/${entityType}/${entityId}/keys/attributes/${scope}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: { attributeKeys: res } });
-            }
-            if (resource === 'alarm' && operation === 'getAlarmById') {
-                const alarmId = this.getNodeParameter('alarmId', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/alarm/${alarmId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-            if (resource === 'relation' && operation === 'getRelation') {
-                const fromId = this.getNodeParameter('fromId', i) as string;
-                const fromType = this.getNodeParameter('fromType', i) as string;
-                const relationType = this.getNodeParameter('relationType', i) as string;
-                const relationTypeGroup = "COMMON";
-                const toId = this.getNodeParameter('toId', i) as string;
-                const toType = this.getNodeParameter('toType', i) as string;
-
-                const qs: Record<string, string> = {
-                    fromId,
-                    fromType,
-                    relationType,
-                    relationTypeGroup,
-                    toId,
-                    toType,
+            try {
+                const resource = this.getNodeParameter('resource', i) as string;
+                const operation = this.getNodeParameter('operation', i) as string;
+
+                // Get credentials and validate
+                const credentials = await getThingsBoardCredentials(this);
+                const baseUrl = credentials.baseUrl;
+
+                // Get access token (with caching)
+                const token = await getAccessToken(this);
+
+                // Check if operation is supported in current edition
+                checkEditionSupport(this, resource, operation, PE_ONLY_OPERATIONS);
+
+                // Create operation context
+                const context: IOperationContext = {
+                    executeFunctions: this,
+                    itemIndex: i,
+                    baseUrl,
+                    token,
                 };
 
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/relation`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
+                // Get resource handler and execute operation
+                const handler = ResourceRegistry.getHandler(resource);
+                const result = await handler.execute(context, operation);
 
-            if (resource === 'relation' && operation === 'findByFrom') {
-                const fromId = this.getNodeParameter('fromId', i) as string;
-                const fromType = this.getNodeParameter('fromType', i) as string;
-                const relationTypeGroup = "COMMON";
-                const qs: Record<string, string> = { fromId, fromType, relationTypeGroup };
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/relations`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'relation' && operation === 'findInfoByFrom') {
-                const fromId = this.getNodeParameter('fromId', i) as string;
-                const fromType = this.getNodeParameter('fromType', i) as string;
-                const relationTypeGroup = "COMMON";
-                const qs: Record<string, string> = { fromId, fromType, relationTypeGroup };
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/relations/info`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'relation' && operation === 'findByFromWithRelationType') {
-                const fromId = this.getNodeParameter('fromId', i) as string;
-                const fromType = this.getNodeParameter('fromType', i) as string;
-                const relationType = this.getNodeParameter('relationType', i) as string;
-                const relationTypeGroup = "COMMON";
-                const qs: Record<string, string> = { fromId, fromType, relationType, relationTypeGroup };
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/relations`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'relation' && operation === 'findByTo') {
-                const toId = this.getNodeParameter('toId', i) as string;
-                const toType = this.getNodeParameter('toType', i) as string;
-                const relationTypeGroup = "COMMON";
-                const qs: Record<string, string> = { toId, toType, relationTypeGroup };
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/relations`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'relation' && operation === 'findInfoByTo') {
-                const toId = this.getNodeParameter('toId', i) as string;
-                const toType = this.getNodeParameter('toType', i) as string;
-                const relationTypeGroup = "COMMON";
-                const qs: Record<string, string> = { toId, toType, relationTypeGroup };
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/relations/info`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'relation' && operation === 'findByToWithRelationType') {
-                const toId = this.getNodeParameter('toId', i) as string;
-                const toType = this.getNodeParameter('toType', i) as string;
-                const relationType = this.getNodeParameter('relationType', i) as string;
-                const relationTypeGroup = "COMMON"
-                const qs: Record<string, string> = { toId, toType, relationType, relationTypeGroup };
-                if (relationTypeGroup) qs.relationTypeGroup = relationTypeGroup;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/relations`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'alarm' && operation === 'getAlarmInfoById') {
-                const alarmId = this.getNodeParameter('alarmId', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/alarm/info/${alarmId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'alarm' && operation === 'getAlarms') {
-                const entityType = this.getNodeParameter('alarmEntityType', i) as string;
-                if (!entityType) {
-                    throw new NodeOperationError(this.getNode(), '"alarmEntityType" is required for getAlarms (e.g. "DEVICE" or "ASSET")');
-                }
-                const entityId = this.getNodeParameter('entityId', i) as string;
-                const searchStatus = this.getNodeParameter('searchStatus', i) as string;
-                const status = this.getNodeParameter('status', i) as string;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('alarmTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('alarmSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-                const startTs = this.getNodeParameter('startTs', i) as string;
-                const endTs = this.getNodeParameter('endTs', i) as string;
-                const fetchOriginator = this.getNodeParameter('fetchOriginator', i) as boolean as unknown as boolean;
-
-                const qs: Record<string, string | number | boolean> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-                if (fetchOriginator !== undefined) qs.fetchOriginator = fetchOriginator;
-                if (searchStatus) qs.searchStatus = searchStatus;
-                if (status) qs.status = status;
-                if (startTs) qs.startTime = startTs;
-                if (endTs) qs.endTime = endTs;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/alarm/${entityType}/${entityId}`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'alarm' && operation === 'getAllAlarms') {
-                const searchStatus = this.getNodeParameter('searchStatus', i) as string;
-                const status = this.getNodeParameter('status', i) as string;
-                const assigneeId = this.getNodeParameter('assigneeId', i) as string;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('alarmTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('alarmSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-                const startTs = this.getNodeParameter('startTs', i) as string;
-                const endTs = this.getNodeParameter('endTs', i) as string;
-                const fetchOriginator = this.getNodeParameter('fetchOriginator', i) as boolean as unknown as boolean;
-
-                const qs: Record<string, string | number | boolean> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-                if (fetchOriginator !== undefined) qs.fetchOriginator = fetchOriginator;
-                if (searchStatus) qs.searchStatus = searchStatus;
-                if (status) qs.status = status;
-                if (assigneeId) qs.assigneeId = assigneeId;
-                if (startTs) qs.startTime = startTs;
-                if (endTs) qs.endTime = endTs;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/alarms`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'alarm' && operation === 'getHighestAlarmSeverity') {
-                const alarmEntityType = this.getNodeParameter('alarmEntityType', i) as string;
-                const entityType = alarmEntityType || (this.getNodeParameter('entityType', i) as string);
-                const entityId = this.getNodeParameter('entityId', i) as string;
-                const searchStatus = this.getNodeParameter('searchStatus', i) as string;
-                const status = this.getNodeParameter('status', i) as string;
-
-                const qs: Record<string, string> = {};
-                if (searchStatus) qs.searchStatus = searchStatus;
-                if (status) qs.status = status;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/alarm/highestSeverity/${entityType}/${entityId}`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'alarm' && operation === 'getAlarmTypes') {
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('alarmTextSearch', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number> = {};
-                if (pageSize !== undefined) qs.pageSize = pageSize;
-                if (page !== undefined) qs.page = page;
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/alarm/types`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'entityGroup' && operation === 'getEntityGroupById') {
-                const entityGroupId = this.getNodeParameter('entityGroupId', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/entityGroup/${entityGroupId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'entityGroup' && operation === 'getEntityGroupsByType') {
-                const groupType = this.getNodeParameter('groupType', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/entityGroups/${groupType}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'entityGroup' && operation === 'getEntityGroupByOwnerAndNameAndType') {
-                const ownerType = this.getNodeParameter('ownerType', i) as string;
-                const ownerId = this.getNodeParameter('ownerId', i) as string;
-                const groupType = this.getNodeParameter('groupType', i) as string;
-                const groupName = this.getNodeParameter('groupName', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/entityGroups/${ownerType}/${ownerId}/${groupType}/${encodeURIComponent(groupName)}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'entityGroup' && operation === 'getEntityGroupsByOwnerAndType') {
-                const ownerType = this.getNodeParameter('ownerType', i) as string;
-                const ownerId = this.getNodeParameter('ownerId', i) as string;
-                const groupType = this.getNodeParameter('groupType', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/entityGroups/${ownerType}/${ownerId}/${groupType}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'entityGroup' && operation === 'getEntityGroupsForEntity') {
-                const groupType = this.getNodeParameter('groupType', i) as string;
-                const entityId = this.getNodeParameter('entityId', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/entityGroups/${groupType}/${entityId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-                results.push({ json: res });
-            }
-
-            if (resource === 'dashboard' && operation === 'createDashboard') {
-                const mode = this.getNodeParameter('dashboardInputMode', i) as string;
-
-                let body: Record<string, unknown>;
-
-                if (mode === 'json') {
-                    const raw = this.getNodeParameter('dashboardJson', i) as unknown;
-
-                    if (typeof raw === 'string') {
-                        try {
-                            body = JSON.parse(raw) as Record<string, unknown>;
-                        } catch (e) {
-                            throw new NodeOperationError(this.getNode(), `dashboardJson must be valid JSON. ${(e as Error).message}`);
-                        }
-                    } else if (raw && typeof raw === 'object') {
-                        body = raw as Record<string, unknown>;
-                    } else {
-                        throw new NodeOperationError(this.getNode(), 'dashboardJson must be a JSON object or JSON string.');
-                    }
-
+                results.push({ json: result });
+            } catch (error) {
+                // Re-throw errors to be handled by n8n's error handling
+                if (this.continueOnFail()) {
+                    results.push({
+                        json: { error: (error as Error).message },
+                        pairedItem: { item: i },
+                    });
                 } else {
-                    const title = this.getNodeParameter('dashboardTitle', i) as string;
-                    body = { title };
+                    throw error;
                 }
-
-                const res = await this.helpers.request!({
-                    method: 'POST',
-                    uri: `${creds.baseUrl}/api/dashboard`,
-                    body,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'dashboard' && operation === 'getDashboardById') {
-                const dashboardId = this.getNodeParameter('dashboardId', i) as string;
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/dashboard/${dashboardId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'dashboard' && operation === 'deleteDashboard') {
-                const dashboardId = this.getNodeParameter('dashboardId', i) as string;
-
-                await this.helpers.request!({
-                    method: 'DELETE',
-                    uri: `${creds.baseUrl}/api/dashboard/${dashboardId}`,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: { deleted: true } });
-            }
-
-            if (resource === 'dashboard' && operation === 'getDashboards') {
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('dashboardTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('dashboardSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-                const isMobileDashboard = this.getNodeParameter('isMobileDashboard', i, false) as boolean;
-
-                const qs: Record<string, string | number | boolean> = {
-                    pageSize, page,
-                };
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-
-                if (typeof isMobileDashboard === 'boolean') qs.mobile = isMobileDashboard;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/tenant/dashboards`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'dashboard' && operation === 'getCustomerDashboards') {
-                const customerId = this.getNodeParameter('customerId', i) as string;
-                const includeCustomers = this.getNodeParameter('includeCustomers', i, false) as boolean;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('dashboardTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('dashboardSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number | boolean> = { pageSize, page };
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-                if (typeof includeCustomers === 'boolean') qs.includeCustomers = includeCustomers;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/customer/${customerId}/dashboards`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
-            }
-
-            if (resource === 'dashboard' && operation === 'getUserDashboards') {
-                const isMobileDashboard = this.getNodeParameter('isMobileDashboard', i, false) as boolean;
-                const allowedOperation = this.getNodeParameter('dashboardOperation', i, '') as string;
-                const userId = this.getNodeParameter('userId', i, '') as string;
-                const pageSize = this.getNodeParameter('pageSize', i) as number;
-                const page = this.getNodeParameter('page', i) as number;
-                const textSearch = this.getNodeParameter('dashboardTextSearch', i) as string;
-                const sortProperty = this.getNodeParameter('dashboardSortProperty', i) as string;
-                const sortOrder = this.getNodeParameter('sortOrder', i) as string;
-
-                const qs: Record<string, string | number | boolean> = { pageSize, page };
-                if (textSearch) qs.textSearch = textSearch;
-                if (sortProperty) qs.sortProperty = sortProperty;
-                if (sortOrder) qs.sortOrder = sortOrder;
-                if (typeof isMobileDashboard === 'boolean') qs.mobile = isMobileDashboard;
-                if (allowedOperation) qs.operation = allowedOperation;
-                if (userId) qs.userId = userId;
-
-                const res = await this.helpers.request!({
-                    method: 'GET',
-                    uri: `${creds.baseUrl}/api/user/dashboards`,
-                    qs,
-                    json: true,
-                    headers: { 'X-Authorization': `Bearer ${token}` },
-                });
-
-                results.push({ json: res });
             }
         }
 
-        return this.prepareOutputData(results);
+        return [results];
     }
-}
-
-async function getEdition(this: IExecuteFunctions): Promise<string> {
-    const cache = this.getWorkflowStaticData('node') as {
-        tbToken?: string; tbTokenAt?: number;
-        tbEdition?: string; tbVersion?: string;
-    };
-    return cache.tbEdition || 'CE';
-}
-
-async function getAccessToken(this: IExecuteFunctions): Promise<string> {
-    const creds = await this.getCredentials('thingsBoardApi') as {
-        baseUrl: string; username: string; password: string;
-    };
-    if (!creds || !creds.baseUrl) {
-        throw new NodeOperationError(this.getNode(), 'ThingsBoard credential `baseUrl` is missing. Open the node credentials and set the base URL (e.g. http://localhost:8080)');
-    }
-    creds.baseUrl = (creds.baseUrl as string).replace(/\/+$/g, '');
-    const cache = this.getWorkflowStaticData('node') as {
-        tbToken?: string; tbTokenAt?: number;
-        tbEdition?: string; tbVersion?: string;
-    };
-
-    const now = Date.now();
-    if (cache.tbToken && cache.tbTokenAt && now - cache.tbTokenAt < 20 * 60 * 1000) {
-        return cache.tbToken;
-    }
-
-    const resp = await this.helpers.request!({
-        method: 'POST',
-        uri: `${creds.baseUrl}/api/auth/login`,
-        json: true,
-        body: { username: creds.username, password: creds.password },
-    });
-
-    const token = resp?.token as string;
-    if (!token) throw new NodeOperationError(this.getNode(), 'ThingsBoard login failed: no token in response');
-
-    cache.tbToken = token;
-    cache.tbTokenAt = Date.now();
-
-    if (!cache.tbEdition) {
-        try {
-            const sys = await this.helpers.request!({
-                method: 'GET',
-                uri: `${creds.baseUrl}/api/system/info`,
-                json: true,
-                headers: { 'X-Authorization': `Bearer ${token}` },
-            });
-            cache.tbEdition = sys?.type || 'CE';
-            cache.tbVersion = sys?.version || 'latest';
-        } catch {
-            cache.tbEdition = 'CE';
-            cache.tbVersion = 'latest';
-        }
-    }
-    return token;
 }
