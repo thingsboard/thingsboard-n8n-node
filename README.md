@@ -1,12 +1,10 @@
-# ThingsBoard n8n Community Node
+# ThingsBoard n8n Node
 
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+![Banner image](images/banner.png)
 
 ThingsBoard is an open-source IoT platform for data collection, processing, visualization, and device management.
 
 This community node for n8n enables you to seamlessly manage devices, assets, telemetry, dashboards, customers, relations, alarms, and entity groups directly within your n8n workflows — or use it as a Tool for AI Agents.
-
-Works with both **ThingsBoard Community Edition (CE)** and **Professional Edition (PE)**. PE-only operations are automatically detected and display clear error messages in CE.
 
 ## 🚀 Quick Start
 
