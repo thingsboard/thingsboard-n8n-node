@@ -334,8 +334,6 @@ Configure operations with **hardcoded values** directly in the node interface. P
 
 ![Save Entity Attributes](images/save-entity-attributes.png)
 
-</div>
-
 #### Use Case
 
 Save configuration attributes to a specific device on a schedule
@@ -372,55 +370,19 @@ Save configuration attributes to a specific device on a schedule
 
 ---
 
-### 3. 🔄 Dynamic Operations - Flow-Based Automation
+### Example 3: 🔄 Dynamic Operations - Flow-Based Automation
 
 Pass data from previous nodes using **expressions** to create dynamic, data-driven workflows.
 
-**Use Case**: Find a device by name and retrieve its telemetry data dynamically
+![Copy data from previous node](images/dynamic-copy-from-previous.png)
 
-**Workflow Steps**:
+![Drag and drop to create dynamic expressions](images/dynamic-mover.png)
 
-**Step 1**: Trigger manually with device name input
+![Dynamic workflow result](images/dynamic-result.png)
 
-![Step 1: Manual trigger](images/example-3-2-1.png)
+This example demonstrates how to build a dynamic workflow: receive a JSON, drag and drop an element from previous JSON result to make it dynamic.
 
-**Step 2**: Get device by name - Find device using dynamic name from trigger
-
-![Step 2: Get device by name](images/example-3-2-2.png)
-
-Configuration:
-- **Resource**: Device
-- **Operation**: Get by Name
-- **Device Name**: `{{ $json.deviceName }}` *(dynamically references "Refrigerator" from trigger)*
-
-**Step 3**: Get timeseries keys - Retrieve available telemetry keys for the device
-
-![Step 3: Get timeseries keys](images/example-3-2-3.png)
-
-Configuration:
-- **Entity ID**: `{{ $json.id.id }}` *(extracts device ID from previous node)*
-- **Entity Type**: `{{ $json.id.entityType }}` *(extracts "DEVICE" from previous node)*
-
-**Step 4**: Get timeseries - Fetch telemetry using device ID and keys
-
-![Step 4: Get timeseries data](images/example-3-2-4.png)
-
-Configuration:
-- **Entity ID**: `{{ $('Get a device by name').item.json.id.id }}` *(device ID from step 2)*
-- **Entity Type**: `{{ $('Get a device by name').item.json.id.entityType }}` *(type from step 2)*
-- **Keys**: `{{ $json.keys.join(',') }}` *(all keys from step 3)*
-- **Start Time**: Custom timestamp (e.g., last 7 days)
-- **End Time**: Current timestamp
-
-**Step 5**: View device information
-
-![Step 5: Device information](images/example-3-2-5.png)
-
-**Step 6**: Complete telemetry data retrieved
-
-![Step 6: Telemetry data](images/example-3-2-6.png)
-
-**Note**: This example uses Execute Workflow trigger for simplicity, but you can choose different trigger types to execute your workflow (Schedule, Webhook, Manual, HTTP Request, etc.) depending on your automation needs.
+For a complete step-by-step guide with detailed screenshots, see the [full documentation](https://thingsboard.io/docs/samples/analytics/n8n-node/).
 
 ## 📚 API Reference
 
