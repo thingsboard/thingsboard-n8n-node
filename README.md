@@ -302,13 +302,14 @@ n8n start
 
 ## 💡 Usage Examples
 
-### 1. 🤖 AI Agent Tool - Conversational IoT Control
+### Example 1: 🤖 AI Agent Tool - Conversational IoT Control
 
 Use the ThingsBoard node as a **tool for AI Agents** to enable intelligent, natural language IoT automation.
 
 ![AI Agent Use Case](images/ai-agent-usecase.png)
 
-**How it works**:
+#### How it works
+
 1. User sends a chat message: *"What devices do I have and what's their status?"*
 2. AI Agent (powered by Google Gemini or OpenAI GPT-4) has access to ThingsBoard tools
 3. Agent autonomously calls:
@@ -316,7 +317,8 @@ Use the ThingsBoard node as a **tool for AI Agents** to enable intelligent, natu
    - `Get timeseries in ThingsBoard` → Fetches latest telemetry
 4. Agent responds in natural language with the actual data
 
-**Natural language commands**:
+#### Natural language commands
+
 - *"Show me the temperature of my living room sensor"*
 - *"Which devices are offline right now?"*
 - *"Update the threshold on device X to 30 degrees"*
@@ -324,24 +326,22 @@ Use the ThingsBoard node as a **tool for AI Agents** to enable intelligent, natu
 
 The AI agent understands context and calls the appropriate ThingsBoard operations automatically!
 
-**Workflow Configuration**:
-1. **Chat Trigger** - Accept user queries
-2. **AI Agent Node** - Process natural language queries
-   - Model: OpenAI GPT-4, Google Gemini, or similar
-   - Tools: ThingsBoard node (all operations available)
-3. **Output Node** - Return AI response
-
 ---
 
-### 2. 💡 Direct Operations - Fixed Values
+### Example 2: 💡 Direct Operations - Fixed Values
 
 Configure operations with **hardcoded values** directly in the node interface. Perfect for scheduled tasks and testing.
 
 ![Save Entity Attributes](images/save-entity-attributes.png)
 
-**Example**: Save configuration attributes to a specific device
+</div>
 
-**Configuration**:
+#### Use Case
+
+Save configuration attributes to a specific device on a schedule
+
+#### Configuration
+
 - **Resource**: Telemetry
 - **Operation**: Save Entity Attributes
 - **Entity Type**: DEVICE
@@ -363,7 +363,8 @@ Configure operations with **hardcoded values** directly in the node interface. P
 }
 ```
 
-**Typical Use Cases**:
+#### Typical Use Cases
+
 - Daily configuration updates on a schedule
 - Testing API operations during development
 - One-time bulk data migrations
@@ -375,34 +376,49 @@ Configure operations with **hardcoded values** directly in the node interface. P
 
 Pass data from previous nodes using **expressions** to create dynamic, data-driven workflows.
 
-![Rule Chain Use Case](images/rule-chain-usecase.png)
-
-**Use Case**: Process ThingsBoard alarm webhook and fetch device attributes
+**Use Case**: Find a device by name and retrieve its telemetry data dynamically
 
 **Workflow Steps**:
 
-1. **Execute Workflow Trigger** - Start workflow with manual JSON input:
-   ```json
-   {
-     "deviceName": "Refrigerator"
-   }
-   ```
+**Step 1**: Trigger manually with device name input
 
-2. **ThingsBoard Node** - Get a device by name
-   - **Resource**: Device
-   - **Operation**: Get by Name
-   - **Device Name**: `{{ $json.deviceName }}` *(dynamically references "Refrigerator" from trigger)*
+![Step 1: Manual trigger](images/example-3-2-1.png)
 
-3. **ThingsBoard Node** - Timeseries keys
-   - **Entity ID**: `{{ $json.id.id }}` *(extracts device ID from previous node)*
-   - **Entity Type**: `{{ $json.id.entityType }}` *(extracts "DEVICE" from previous node)*
+**Step 2**: Get device by name - Find device using dynamic name from trigger
 
-4. **ThingsBoard Node** - Get timeseries
-   - **Entity ID**: `{{ $('Get a device by name').item.json.id.id }}` *(device ID from step 2)*
-   - **Entity Type**: `{{ $('Get a device by name').item.json.id.entityType }}` *(type from step 2)*
-   - **Keys**: `{{ $json.keys.join(',') }}` *(all keys from step 3)*
-   - **Start Time**: Custom timestamp (e.g., last 7 days)
-   - **End Time**: Current timestamp
+![Step 2: Get device by name](images/example-3-2-2.png)
+
+Configuration:
+- **Resource**: Device
+- **Operation**: Get by Name
+- **Device Name**: `{{ $json.deviceName }}` *(dynamically references "Refrigerator" from trigger)*
+
+**Step 3**: Get timeseries keys - Retrieve available telemetry keys for the device
+
+![Step 3: Get timeseries keys](images/example-3-2-3.png)
+
+Configuration:
+- **Entity ID**: `{{ $json.id.id }}` *(extracts device ID from previous node)*
+- **Entity Type**: `{{ $json.id.entityType }}` *(extracts "DEVICE" from previous node)*
+
+**Step 4**: Get timeseries - Fetch telemetry using device ID and keys
+
+![Step 4: Get timeseries data](images/example-3-2-4.png)
+
+Configuration:
+- **Entity ID**: `{{ $('Get a device by name').item.json.id.id }}` *(device ID from step 2)*
+- **Entity Type**: `{{ $('Get a device by name').item.json.id.entityType }}` *(type from step 2)*
+- **Keys**: `{{ $json.keys.join(',') }}` *(all keys from step 3)*
+- **Start Time**: Custom timestamp (e.g., last 7 days)
+- **End Time**: Current timestamp
+
+**Step 5**: View device information
+
+![Step 5: Device information](images/example-3-2-5.png)
+
+**Step 6**: Complete telemetry data retrieved
+
+![Step 6: Telemetry data](images/example-3-2-6.png)
 
 **Note**: This example uses Execute Workflow trigger for simplicity, but you can choose different trigger types to execute your workflow (Schedule, Webhook, Manual, HTTP Request, etc.) depending on your automation needs.
 
