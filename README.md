@@ -2,9 +2,24 @@
 
 ![Banner image](images/banner.png)
 
-ThingsBoard is an open-source IoT platform for data collection, processing, visualization, and device management.
+[n8n](https://n8n.io/) is a workflow automation platform that combines traditional business process automation with AI capabilities.
 
-This community node for n8n enables you to seamlessly manage devices, assets, telemetry, dashboards, customers, relations, alarms, and entity groups directly within your n8n workflows — or use it as a Tool for AI Agents.
+The **ThingsBoard n8n Node** provides deep and native integration between n8n and the ThingsBoard IoT Platform, enabling you to manage IoT infrastructure directly from n8n workflows.
+
+## ✨ Features
+
+- **Manage IoT devices, assets, and customers** directly from n8n workflows
+- **Access and manipulate telemetry data** in real-time with attribute and time-series operations
+- **Monitor alarms** and create automated responses based on alarm severity and type
+- **Navigate entity relationships** to understand your IoT infrastructure topology
+- **Build AI-powered IoT automation** using n8n AI Agents with natural language commands
+- **Automate complex IoT workflows** with 61 operations across 8 resources (51 operations for Community Edition)
+
+## 📖 Documentation
+
+For detailed documentation including usage examples, workflow patterns, and API reference, visit:
+
+**[ThingsBoard n8n Node Documentation](https://thingsboard.io/docs/samples/analytics/n8n-node/)**
 
 ## 🚀 Quick Start
 
@@ -135,7 +150,7 @@ environment:
   - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
 ```
 
-### n8n Cloud
+### Method 4: n8n Cloud
 
 The ThingsBoard node requires verification to be available on n8n Cloud. n8n Cloud supports a select group of verified community nodes included in their official catalog.
 
@@ -167,7 +182,7 @@ Before using the ThingsBoard node, configure your connection credentials:
 | Field | Description | Example |
 |-------|-------------|---------|
 | **Base URL** | ThingsBoard instance URL (without trailing slash) | `https://demo.thingsboard.io` or `https://thingsboard.cloud` |
-| **Username** | Your ThingsBoard account username/email | `tenant@thingsboard.org` |
+| **Username** | Your ThingsBoard account email | `tenant@thingsboard.org` |
 | **Password** | Your ThingsBoard account password | `tenant` |
 
 4. Click **Save** to store the credentials
@@ -285,36 +300,6 @@ npm link n8n-nodes-thingsboard
 n8n start
 ```
 
-### Common Integration Patterns
-
-#### Pattern 1: IoT Data Pipeline
-```
-Webhook → ThingsBoard (Save Telemetry) → Process Data → Save Attributes
-```
-Receive sensor data via webhook, save to ThingsBoard, process it, and update device attributes.
-
-#### Pattern 2: Device Management
-```
-Schedule Trigger → Get Tenant Devices → Filter Inactive → Send Alert
-```
-Daily check for inactive devices and send notifications to administrators.
-
-#### Pattern 3: Data Export
-```
-ThingsBoard (Get Timeseries) → Transform Data → Google Sheets / Database
-```
-Export telemetry data for reporting and analysis in external systems.
-
-#### Pattern 4: Intelligent Monitoring
-```
-AI Agent ← Chat Interface
-    ↓
-ThingsBoard Tools (Get/Save/Delete operations)
-    ↓
-Automated device management based on natural language commands
-```
-Enable non-technical users to manage IoT infrastructure through conversational AI.
-
 ## 💡 Usage Examples
 
 ### 1. 🤖 AI Agent Tool - Conversational IoT Control
@@ -420,12 +405,6 @@ Pass data from previous nodes using **expressions** to create dynamic, data-driv
    - **End Time**: Current timestamp
 
 **Note**: This example uses Execute Workflow trigger for simplicity, but you can choose different trigger types to execute your workflow (Schedule, Webhook, Manual, HTTP Request, etc.) depending on your automation needs.
-
-**Common Dynamic Patterns**:
-- Processing ThingsBoard webhooks and rule engine outputs
-- Dynamic device operations based on alarm triggers
-- Building complex IoT automation pipelines with data flow
-- Integrating with external systems (Slack, email, databases, CRM)
 
 ## 📚 API Reference
 

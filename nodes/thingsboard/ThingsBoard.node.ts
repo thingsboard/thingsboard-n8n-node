@@ -33,7 +33,10 @@ export class ThingsBoard implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'ThingsBoard',
         name: 'thingsBoard',
-        icon: 'file:thingsboard.svg',
+        icon: {
+            light: 'file:thingsboard-black.svg',
+            dark: 'file:thingsboard-white.svg',
+        },
         group: ['transform'],
         version: 1,
         description: 'Interact with ThingsBoard REST API',
@@ -42,6 +45,7 @@ export class ThingsBoard implements INodeType {
         outputs: (['main'] as any),
         credentials: [{ name: 'thingsBoardApi', required: true }],
         usableAsTool: true,
+        documentationUrl: 'https://thingsboard.io/docs/samples/analytics/n8n-node/',
         properties: [
             {
                 displayName: 'Resource',
@@ -619,11 +623,11 @@ export class ThingsBoard implements INodeType {
                     { name: 'Attribute Keys', value: 'getAttributeKeys', action: 'Get attribute keys', description: 'Returns a set of unique attribute key names for the selected entity' },
                     { name: 'Attribute Keys (by Scope)', value: 'getAttributeKeysByScope', action: 'Get attribute keys by scope', description: 'Returns a set of unique attribute key names for the selected entity and scope' },
                     { name: 'Attributes', value: 'getAttributes', action: 'Get attributes', description: 'Returns a list of attributes for the selected entity' },
-                    { name: 'Delete Entity Attributes', value: 'deleteEntityAttributes', action: 'Delete entity attributes', description: 'Delete entity attributes by keys' },
                     { name: 'Delete Device Attributes', value: 'deleteDeviceAttributes', action: 'Delete device attributes', description: 'Delete device attributes by keys' },
+                    { name: 'Delete Entity Attributes', value: 'deleteEntityAttributes', action: 'Delete entity attributes', description: 'Delete entity attributes by keys' },
                     { name: 'Delete Entity Timeseries', value: 'deleteEntityTimeseries', action: 'Delete entity timeseries', description: 'Delete entity time series data' },
-                    { name: 'Save Entity Attributes', value: 'saveEntityAttributes', action: 'Save entity attributes', description: 'Creates or updates entity attributes for any entity type' },
                     { name: 'Save Device Attributes', value: 'saveDeviceAttributes', action: 'Save device attributes', description: 'Creates or updates device attributes' },
+                    { name: 'Save Entity Attributes', value: 'saveEntityAttributes', action: 'Save entity attributes', description: 'Creates or updates entity attributes for any entity type' },
                     { name: 'Save Entity Telemetry', value: 'saveEntityTelemetry', action: 'Save entity telemetry', description: 'Creates or updates entity time series data' },
                     { name: 'Save Entity Telemetry with TTL', value: 'saveEntityTelemetryWithTTL', action: 'Save entity telemetry with ttl', description: 'Creates or updates entity time series data with TTL' },
                     { name: 'Timeseries (Latest)', value: 'getLatestTimeseries', action: 'Get latest timeseries', description: 'Returns the latest timeseries data for the selected entity' },
@@ -784,7 +788,7 @@ export class ThingsBoard implements INodeType {
                 type: 'json',
                 required: true,
                 default: '{"temperature": 26}',
-                description: 'Telemetry data in JSON format. Supports: 1) Simple format: {"temperature": 26}, 2) With timestamp: {"ts":1634712287000,"values":{"temperature":26}}, 3) Array: [{"ts":1634712287000,"values":{"temperature":26}}]',
+                description: 'Telemetry data in JSON format. Supports: 1) Simple format: {"temperature": 26}, 2) With timestamp: {"ts":1634712287000,"values":{"temperature":26}}, 3) Array: [{"ts":1634712287000,"values":{"temperature":26}}].',
                 displayOptions: { show: { resource: ['telemetry'], operation: ['saveEntityTelemetry', 'saveEntityTelemetryWithTTL'] } },
             },
             {
@@ -802,7 +806,7 @@ export class ThingsBoard implements INodeType {
                 type: 'string',
                 required: true,
                 default: '',
-                description: 'Comma-separated list of attribute keys to delete. For example: "temperature,humidity,status"',
+                description: 'Comma-separated list of attribute keys to delete. For example: "temperature,humidity,status".',
                 displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityAttributes', 'deleteDeviceAttributes'] } },
             },
             {
@@ -811,7 +815,7 @@ export class ThingsBoard implements INodeType {
                 type: 'string',
                 required: true,
                 default: '',
-                description: 'Comma-separated list of timeseries keys to delete. For example: "temperature,humidity,voltage"',
+                description: 'Comma-separated list of timeseries keys to delete. For example: "temperature,humidity,voltage".',
                 displayOptions: { show: { resource: ['telemetry'], operation: ['deleteEntityTimeseries'] } },
             },
             {

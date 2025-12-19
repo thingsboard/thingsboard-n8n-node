@@ -1,5 +1,5 @@
 {
-    "node": "n8n-nodes-base.ThingsBoard",
+    "node": "n8n-nodes-thingsboard",
     "nodeVersion": "1.0",
     "codexVersion": "1.0",
     "categories": [
@@ -19,7 +19,7 @@
     },
     "displayName": "ThingsBoard",
     "name": "thingsBoard",
-    "icon": "file:thingsboard.svg",
+    "icon": "",
     "group": [
         "transform"
     ],
