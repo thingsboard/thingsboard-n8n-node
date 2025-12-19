@@ -104,51 +104,47 @@ n8n start
 
 ### Method 3: Docker Installation
 
-Create a `Dockerfile`:
+**Step 1**: Create a directory for n8n and navigate to it:
 
-```dockerfile
-FROM n8nio/n8n:latest
-USER node
-RUN cd /home/node/.n8n && \
-    mkdir -p nodes && \
-    cd nodes && \
-    npm install n8n-nodes-thingsboard
+```bash
+mkdir n8n
+cd n8n
 ```
 
-Create or modify your `docker-compose.yml`:
+**Step 2**: Create a `docker-compose.yml` file in this directory:
 
 ```yaml
-version: "3.8"
-
 services:
   n8n:
-    build: .
+    image: n8nio/n8n:latest
     ports:
       - "5678:5678"
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=admin
       - N8N_BASIC_AUTH_PASSWORD=password
+      # Uncomment the lines below to use ThingsBoard node as AI Agent tool
+      # - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      # - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
     volumes:
       - n8n_data:/home/node/.n8n
 
 volumes:
   n8n_data:
+    driver: local
 ```
 
-Build and start the services:
+**Step 3**: Start the services:
 
 ```bash
-docker-compose up -d --build
+docker-compose up -d
 ```
 
-**AI Agent Tool Usage**: If you plan to use the ThingsBoard node as a tool for AI Agents, add these environment variables to your `docker-compose.yml`:
-
-```yaml
-environment:
-  - N8N_COMMUNITY_PACKAGES_ENABLED=true
-  - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
-```
+**Step 4**: After n8n starts, install the ThingsBoard node using the **GUI method** (Method 1):
+1. Open n8n in your browser (`http://localhost:5678`)
+2. Navigate to **Settings** → **Community Nodes**
+3. Install `n8n-nodes-thingsboard`
+4. Refresh your browser
 
 ### Method 4: n8n Cloud
 
