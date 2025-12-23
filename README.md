@@ -26,7 +26,7 @@ For detailed documentation including usage examples, workflow patterns, and API 
 ### Installation
 
 ```bash
-npm install n8n-nodes-thingsboard
+npm install @thingsboard/n8n-nodes-thingsboard
 ```
 
 ### Configuration
@@ -39,114 +39,24 @@ npm install n8n-nodes-thingsboard
 3. Add the ThingsBoard node to your workflow
 4. Select a resource (Device, Asset, etc.) and operation
 
-### Usage
 
-The ThingsBoard node supports multiple usage patterns to fit your automation needs:
+## 📦 Installation
 
-**🤖 AI Agent Tool** - Use as a tool for AI Agents to enable conversational IoT control
-*Example*: "Show me all devices" → Agent calls ThingsBoard → Natural language response
-
-**💡 Direct Operations** - Configure operations with fixed values in the node interface
-*Example*: Save specific attributes to device `abc-123` on a schedule
-
-**🔄 Dynamic Operations** - Pass data from previous nodes using expressions
-*Example*: Process alarm webhook → Extract entity ID → Get attributes → Send notification
-
-See [Usage Examples](#-usage-examples) below for detailed walkthroughs with screenshots.
-
-**Operation Modes**: For create operations (Device, Asset, Dashboard), you can choose:
-- **Params Mode**: Use simple form fields (name, type, label, customer ID)
-- **JSON Mode**: Paste a complete ThingsBoard entity JSON object
-
-## 📦 Installation Methods
-
-### Method 1: GUI Installation (Recommended for Self-Hosted)
+### GUI Installation
 
 For self-hosted n8n instances, you can install directly via the web interface:
 
 1. Open n8n in your browser
 2. Navigate to **Settings** → **Community Nodes**
 3. Click **Install a community node**
-4. Enter package name: `n8n-nodes-thingsboard`
+4. Enter package name: `@thingsboard/n8n-nodes-thingsboard`
 5. Click **Install**
 6. Wait for installation to complete
 7. Refresh your browser
 
 **Note**: This method requires owner/admin permissions and is only available for self-hosted n8n (not n8n Cloud).
 
-### Method 2: Manual Installation (npm)
-
-For local n8n installations, install the node via npm:
-
-```bash
-# Create and navigate to the nodes directory
-mkdir -p ~/.n8n/nodes
-cd ~/.n8n/nodes
-
-# Install the ThingsBoard node
-npm install n8n-nodes-thingsboard
-```
-
-After installation, restart n8n:
-
-```bash
-# If running n8n directly
-n8n start
-```
-
-**AI Agent Tool Usage**: If you plan to use the ThingsBoard node as a tool for AI Agents, set these environment variables before starting n8n:
-
-```bash
-export N8N_COMMUNITY_PACKAGES_ENABLED=true
-export N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
-n8n start
-```
-
-### Method 3: Docker Installation
-
-**Step 1**: Create a directory for n8n and navigate to it:
-
-```bash
-mkdir n8n
-cd n8n
-```
-
-**Step 2**: Create a `docker-compose.yml` file in this directory:
-
-```yaml
-services:
-  n8n:
-    image: n8nio/n8n:latest
-    ports:
-      - "5678:5678"
-    environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=password
-      # Uncomment the lines below to use ThingsBoard node as AI Agent tool
-      # - N8N_COMMUNITY_PACKAGES_ENABLED=true
-      # - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
-    volumes:
-      - n8n_data:/home/node/.n8n
-
-volumes:
-  n8n_data:
-    driver: local
-```
-
-**Step 3**: Start the services:
-
-```bash
-docker-compose up -d
-```
-
-**Step 4**: After n8n starts, install the ThingsBoard node using the **GUI method** (Method 1):
-1. Open n8n in your browser (`http://localhost:5678`)
-2. Navigate to **Settings** → **Community Nodes**
-3. Install `n8n-nodes-thingsboard`
-4. Refresh your browser
-
-### Method 4: n8n Cloud
+### n8n Cloud
 
 The ThingsBoard node requires verification to be available on n8n Cloud. n8n Cloud supports a select group of verified community nodes included in their official catalog.
 
@@ -290,7 +200,7 @@ npm run dev
 npm link
 
 # In your n8n directory
-npm link n8n-nodes-thingsboard
+npm link @thingsboard/n8n-nodes-thingsboard
 
 # Start n8n
 n8n start
@@ -324,59 +234,19 @@ The AI agent understands context and calls the appropriate ThingsBoard operation
 
 ---
 
-### Example 2: 💡 Direct Operations - Fixed Values
+### Example 2: 💡 Daily Telemetry Export to AWS S3
 
-Configure operations with **hardcoded values** directly in the node interface. Perfect for scheduled tasks and testing.
+**Real-world scenario**: Every night, export device telemetry to S3, but also enrich it with device metadata from your CRM, convert to Parquet format for Athena, and trigger a Lambda function to update your data warehouse. One workflow, multiple outputs.
 
-![Save Entity Attributes](images/save-entity-attributes.png)
+**Why use n8n instead of ThingsBoard's native export**:
+- **Multi-destination** - Send the same data to S3 + Snowflake + email report in one workflow
+- **Data transformation** - Enrich telemetry with business context (customer names, locations from CRM)
+- **Custom formats** - Convert to Parquet, Avro, or CSV with specific schemas for your analytics tools
+- **Conditional logic** - Export only specific devices, filter by customer tier, or aggregate before storage
+- **Integration chains** - After S3 upload → Trigger AWS Lambda → Update tracking database → Send Slack notification
 
-#### Use Case
-
-Save configuration attributes to a specific device on a schedule
-
-#### Configuration
-
-- **Resource**: Telemetry
-- **Operation**: Save Entity Attributes
-- **Entity Type**: DEVICE
-- **Entity ID**: `2d2c8cc0-d75a-11f0-9e9b-db8ef79a21ad` *(hardcoded)*
-- **Scope**: SERVER_SCOPE
-- **Attributes JSON**: Direct JSON input
-
-```json
-{
-  "stringKey": "value1",
-  "booleanKey": true,
-  "doubleKey": 42.0,
-  "longKey": 73,
-  "jsonKey": {
-    "someNumber": 42,
-    "someArray": [1, 2, 3],
-    "someNestedObject": {"key": "value"}
-  }
-}
-```
-
-#### Typical Use Cases
-
-- Daily configuration updates on a schedule
-- Testing API operations during development
-- One-time bulk data migrations
-- Periodic attribute updates with fixed values
-
----
-
-### Example 3: 🔄 Dynamic Operations - Flow-Based Automation
-
-Pass data from previous nodes using **expressions** to create dynamic, data-driven workflows.
-
-![Copy data from previous node](images/dynamic-copy-from-previous.png)
-
-![Drag and drop to create dynamic expressions](images/dynamic-mover.png)
-
-![Dynamic workflow result](images/dynamic-result.png)
-
-This example demonstrates how to build a dynamic workflow: receive a JSON, drag and drop an element from previous JSON result to make it dynamic.
+![Daily telemetry export](images/telemetry-export.png)
+![Daily telemetry export result](images/telemetry-export-result.png)
 
 For a complete step-by-step guide with detailed screenshots, see the [full documentation](https://thingsboard.io/docs/samples/analytics/n8n-node/).
 
@@ -386,7 +256,7 @@ The ThingsBoard n8n node is built on top of the ThingsBoard REST API. For detail
 
 ## 🔗 Links
 
-- **npm Package**: [n8n-nodes-thingsboard](https://www.npmjs.com/package/n8n-nodes-thingsboard)
+- **npm Package**: [@thingsboard/n8n-nodes-thingsboard](https://www.npmjs.com/package/@thingsboard/n8n-nodes-thingsboard)
 - **GitHub Repository**: [thingsboard/thingsboard-n8n-node](https://github.com/thingsboard/thingsboard-n8n-node)
 - **n8n Documentation**: [docs.n8n.io](https://docs.n8n.io/)
 - **n8n Community**: [community.n8n.io](https://community.n8n.io/)
