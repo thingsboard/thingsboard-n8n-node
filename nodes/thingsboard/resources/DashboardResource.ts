@@ -36,7 +36,12 @@ export class DashboardResource implements IResourceHandler {
 
 	private async createDashboard(context: IOperationContext): Promise<any> {
 		const { executeFunctions, itemIndex, baseUrl, token } = context;
-		const mode = getOptionalParam(executeFunctions, 'dashboardInputMode', itemIndex, 'title') as string;
+		const mode = getOptionalParam(
+			executeFunctions,
+			'dashboardInputMode',
+			itemIndex,
+			'title',
+		) as string;
 
 		let body: Record<string, unknown>;
 
@@ -97,7 +102,12 @@ export class DashboardResource implements IResourceHandler {
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'dashboard');
 		const qs = paginationToQueryString(paginationParams);
 
-		const isMobileDashboard = getOptionalParam<boolean>(executeFunctions, 'isMobileDashboard', itemIndex, false);
+		const isMobileDashboard = getOptionalParam<boolean>(
+			executeFunctions,
+			'isMobileDashboard',
+			itemIndex,
+			false,
+		);
 		if (typeof isMobileDashboard === 'boolean') {
 			qs.mobile = isMobileDashboard;
 		}
@@ -121,7 +131,12 @@ export class DashboardResource implements IResourceHandler {
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'dashboard');
 		const qs = paginationToQueryString(paginationParams);
 
-		const includeCustomers = getOptionalParam<boolean>(executeFunctions, 'includeCustomers', itemIndex, false);
+		const includeCustomers = getOptionalParam<boolean>(
+			executeFunctions,
+			'includeCustomers',
+			itemIndex,
+			false,
+		);
 		if (typeof includeCustomers === 'boolean') {
 			qs.includeCustomers = includeCustomers;
 		}
@@ -144,8 +159,18 @@ export class DashboardResource implements IResourceHandler {
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'dashboard');
 		const qs = paginationToQueryString(paginationParams);
 
-		const isMobileDashboard = getOptionalParam<boolean>(executeFunctions, 'isMobileDashboard', itemIndex, false);
-		const allowedOperation = getOptionalParam(executeFunctions, 'dashboardOperation', itemIndex, '');
+		const isMobileDashboard = getOptionalParam<boolean>(
+			executeFunctions,
+			'isMobileDashboard',
+			itemIndex,
+			false,
+		);
+		const allowedOperation = getOptionalParam(
+			executeFunctions,
+			'dashboardOperation',
+			itemIndex,
+			'',
+		);
 		const userId = getOptionalParam(executeFunctions, 'userId', itemIndex, '');
 
 		if (typeof isMobileDashboard === 'boolean') qs.mobile = isMobileDashboard;

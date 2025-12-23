@@ -1,10 +1,6 @@
 import { IOperationContext, IResourceHandler } from '../utils/types';
 import { makeThingsBoardRequest } from '../utils/requestHandler';
-import {
-	buildPaginationQuery,
-	paginationToQueryString,
-	validateRequired,
-} from '../utils/helpers';
+import { buildPaginationQuery, paginationToQueryString, validateRequired } from '../utils/helpers';
 
 export class CustomerResource implements IResourceHandler {
 	async execute(context: IOperationContext, operation: string): Promise<any> {

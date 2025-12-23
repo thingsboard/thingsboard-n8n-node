@@ -11,7 +11,6 @@ import {
 
 export class DeviceResource implements IResourceHandler {
 	async execute(context: IOperationContext, operation: string): Promise<any> {
-
 		switch (operation) {
 			case 'getDeviceById':
 				return await this.getDeviceById(context);
@@ -59,7 +58,12 @@ export class DeviceResource implements IResourceHandler {
 
 	private async createDevice(context: IOperationContext): Promise<any> {
 		const { executeFunctions, itemIndex, baseUrl, token } = context;
-		const mode = getOptionalParam(executeFunctions, 'deviceInputMode', itemIndex, 'params') as string;
+		const mode = getOptionalParam(
+			executeFunctions,
+			'deviceInputMode',
+			itemIndex,
+			'params',
+		) as string;
 
 		let body: Record<string, unknown>;
 		const qs: QueryString = {};
@@ -77,7 +81,12 @@ export class DeviceResource implements IResourceHandler {
 			const name = validateRequired(executeFunctions, 'deviceNameCreate', itemIndex);
 			const type = getOptionalParam(executeFunctions, 'deviceTypeCreate', itemIndex, '');
 			const label = getOptionalParam(executeFunctions, 'deviceLabel', itemIndex, '');
-			const customerId = getOptionalParam(executeFunctions, 'customerIdDeviceCreate', itemIndex, '');
+			const customerId = getOptionalParam(
+				executeFunctions,
+				'customerIdDeviceCreate',
+				itemIndex,
+				'',
+			);
 
 			body = buildEntityWithCustomer(name, type, label, customerId);
 		}

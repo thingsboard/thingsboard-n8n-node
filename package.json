@@ -20,7 +20,7 @@
   "engines": {
     "node": ">=20.15"
   },
-  "main": "index.js",
+  "main": "dist/nodes/thingsboard/ThingsBoard.node.js",
   "scripts": {
     "build": "npx rimraf dist && npx tsc && gulp build:icons",
     "dev": "tsc --watch",
@@ -29,9 +29,7 @@
     "lintfix": "eslint nodes credentials package.json --fix",
     "prepublishOnly": "npm run build && npm run lint -c .eslintrc.prepublish.js nodes credentials package.json"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist", "README.md", "LICENSE.md", "package.json"],
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [

@@ -58,7 +58,12 @@ export class AssetResource implements IResourceHandler {
 
 	private async createAsset(context: IOperationContext): Promise<any> {
 		const { executeFunctions, itemIndex, baseUrl, token } = context;
-		const mode = getOptionalParam(executeFunctions, 'assetInputMode', itemIndex, 'params') as string;
+		const mode = getOptionalParam(
+			executeFunctions,
+			'assetInputMode',
+			itemIndex,
+			'params',
+		) as string;
 
 		let body: Record<string, unknown>;
 

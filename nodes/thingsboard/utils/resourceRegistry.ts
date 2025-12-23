@@ -17,7 +17,10 @@ import { DashboardResource } from '../resources/DashboardResource';
  * Provides a centralized way to get resource handlers
  */
 export class ResourceRegistry {
-	private static handlers: Map<ThingsBoardResource, IResourceHandler> = new Map<ThingsBoardResource, IResourceHandler>([
+	private static handlers: Map<ThingsBoardResource, IResourceHandler> = new Map<
+		ThingsBoardResource,
+		IResourceHandler
+	>([
 		['device', new DeviceResource()],
 		['asset', new AssetResource()],
 		['customer', new CustomerResource()],

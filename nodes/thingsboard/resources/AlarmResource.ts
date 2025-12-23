@@ -72,7 +72,12 @@ export class AlarmResource implements IResourceHandler {
 		const status = getOptionalParam(executeFunctions, 'status', itemIndex, '');
 		const startTs = getOptionalParam(executeFunctions, 'startTs', itemIndex, '');
 		const endTs = getOptionalParam(executeFunctions, 'endTs', itemIndex, '');
-		const fetchOriginator = getOptionalParam<boolean>(executeFunctions, 'fetchOriginator', itemIndex, false);
+		const fetchOriginator = getOptionalParam<boolean>(
+			executeFunctions,
+			'fetchOriginator',
+			itemIndex,
+			false,
+		);
 
 		if (searchStatus) qs.searchStatus = searchStatus;
 		if (status) qs.status = status;
@@ -103,7 +108,12 @@ export class AlarmResource implements IResourceHandler {
 		const assigneeId = getOptionalParam(executeFunctions, 'assigneeId', itemIndex, '');
 		const startTs = getOptionalParam(executeFunctions, 'startTs', itemIndex, '');
 		const endTs = getOptionalParam(executeFunctions, 'endTs', itemIndex, '');
-		const fetchOriginator = getOptionalParam<boolean>(executeFunctions, 'fetchOriginator', itemIndex, false);
+		const fetchOriginator = getOptionalParam<boolean>(
+			executeFunctions,
+			'fetchOriginator',
+			itemIndex,
+			false,
+		);
 
 		if (searchStatus) qs.searchStatus = searchStatus;
 		if (status) qs.status = status;
@@ -128,7 +138,8 @@ export class AlarmResource implements IResourceHandler {
 		const { executeFunctions, itemIndex, baseUrl, token } = context;
 
 		const alarmEntityType = getOptionalParam(executeFunctions, 'alarmEntityType', itemIndex, '');
-		const entityType = alarmEntityType || getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
+		const entityType =
+			alarmEntityType || getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
 
 		const qs: QueryString = {};

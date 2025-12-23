@@ -63,7 +63,12 @@ export class TelemetryResource implements IResourceHandler {
 				: Math.trunc(Number(endTsParam));
 		const agg = getOptionalParam(executeFunctions, 'agg', itemIndex, 'NONE');
 		const interval = getOptionalParam(executeFunctions, 'interval', itemIndex, '0');
-		const intervalType = getOptionalParam(executeFunctions, 'intervalType', itemIndex, 'MILLISECONDS');
+		const intervalType = getOptionalParam(
+			executeFunctions,
+			'intervalType',
+			itemIndex,
+			'MILLISECONDS',
+		);
 		const timeZone = getOptionalParam(executeFunctions, 'timeZone', itemIndex, '');
 		const orderBy = getOptionalParam(executeFunctions, 'orderBy', itemIndex, 'DESC');
 		const limit = getOptionalParam<number>(executeFunctions, 'limit', itemIndex, 50);
@@ -359,7 +364,12 @@ export class TelemetryResource implements IResourceHandler {
 			itemIndex,
 			false,
 		);
-		const deleteLatest = getOptionalParam<boolean>(executeFunctions, 'deleteLatest', itemIndex, true);
+		const deleteLatest = getOptionalParam<boolean>(
+			executeFunctions,
+			'deleteLatest',
+			itemIndex,
+			true,
+		);
 		const rewriteLatestIfDeleted = getOptionalParam<boolean>(
 			executeFunctions,
 			'rewriteLatestIfDeleted',

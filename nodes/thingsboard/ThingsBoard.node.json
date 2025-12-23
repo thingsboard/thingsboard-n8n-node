@@ -1,44 +1,36 @@
 {
-    "node": "n8n-nodes-thingsboard",
-    "nodeVersion": "1.0",
-    "codexVersion": "1.0",
-    "categories": [
-        "Miscellaneous"
-    ],
-    "resources": {
-        "credentialDocumentation": [
-            {
-                "url": ""
-            }
-        ],
-        "primaryDocumentation": [
-            {
-                "url": ""
-            }
-        ]
-    },
-    "displayName": "ThingsBoard",
-    "name": "thingsBoard",
-    "icon": "",
-    "group": [
-        "transform"
-    ],
-    "version": 1,
-    "description": "Interact with ThingsBoard REST API",
-    "defaults": {
-        "name": "ThingsBoard"
-    },
-    "inputs": [
-        "main"
-    ],
-    "outputs": [
-        "main"
-    ],
-    "credentials": [
-        {
-            "name": "thingsBoardApi",
-            "required": true
-        }
-    ],
-    "properties": []
+	"node": "n8n-nodes-thingsboard",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Miscellaneous"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": ""
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": ""
+			}
+		]
+	},
+	"displayName": "ThingsBoard",
+	"name": "thingsBoard",
+	"icon": "",
+	"group": ["transform"],
+	"version": 1,
+	"description": "Interact with ThingsBoard REST API",
+	"defaults": {
+		"name": "ThingsBoard"
+	},
+	"inputs": ["main"],
+	"outputs": ["main"],
+	"credentials": [
+		{
+			"name": "thingsBoardApi",
+			"required": true
+		}
+	],
+	"properties": []
 }

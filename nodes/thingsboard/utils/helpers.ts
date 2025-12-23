@@ -18,11 +18,9 @@ export function buildPaginationQuery(
 		itemIndex,
 		'',
 	) as string;
-	const sortOrder = executeFunctions.getNodeParameter(
-		'sortOrder',
-		itemIndex,
-		'DESC',
-	) as 'ASC' | 'DESC';
+	const sortOrder = executeFunctions.getNodeParameter('sortOrder', itemIndex, 'DESC') as
+		| 'ASC'
+		| 'DESC';
 
 	const params: IPaginationParams = {
 		pageSize,

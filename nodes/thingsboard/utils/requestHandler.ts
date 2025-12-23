@@ -39,9 +39,7 @@ export async function makeThingsBoardRequest(
 
 		if (response.statusCode >= 400) {
 			const errorMessage =
-				response.body?.message ||
-				response.body?.error ||
-				`HTTP ${response.statusCode} error`;
+				response.body?.message || response.body?.error || `HTTP ${response.statusCode} error`;
 
 			throw new NodeOperationError(
 				executeFunctions.getNode(),
@@ -145,8 +143,8 @@ export async function getAccessToken(executeFunctions: IExecuteFunctions): Promi
 			});
 
 			const edition = systemInfo.edition || 'CE';
-		// Normalize PAAS to PE
-		staticData.edition = edition === 'PAAS' ? 'PE' : edition;
+			// Normalize PAAS to PE
+			staticData.edition = edition === 'PAAS' ? 'PE' : edition;
 		} catch {
 			// Default to CE if system info fails
 			staticData.edition = 'CE';
