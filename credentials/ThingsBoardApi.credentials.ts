@@ -1,9 +1,13 @@
-import type { ICredentialType, INodeProperties } from 'n8n-workflow';
+import type {
+	ICredentialTestRequest,
+	ICredentialType,
+	INodeProperties,
+} from 'n8n-workflow';
 
 export class ThingsBoardApi implements ICredentialType {
 	name = 'thingsBoardApi';
 	displayName = 'ThingsBoard API';
-	documentationUrl = 'https://example.com/docs/auth';
+	documentationUrl = 'https://thingsboard.io/docs/reference/rest-api/';
 	properties: INodeProperties[] = [
 		{
 			displayName: 'Base URL',
@@ -28,4 +32,16 @@ export class ThingsBoardApi implements ICredentialType {
 			required: true,
 		},
 	];
+
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL: '={{$credentials.baseUrl}}',
+			url: '/api/auth/login',
+			method: 'POST',
+			body: {
+				username: '={{$credentials.username}}',
+				password: '={{$credentials.password}}',
+			},
+		},
+	};
 }
