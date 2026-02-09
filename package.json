@@ -1,6 +1,6 @@
 {
   "name": "@thingsboard/n8n-nodes-thingsboard",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "n8n node for ThingsBoard",
   "keywords": [
     "n8n",

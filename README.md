@@ -34,7 +34,7 @@ npm install @thingsboard/n8n-nodes-thingsboard
 1. In n8n, add ThingsBoard credentials:
    - **Base URL**: `https://demo.thingsboard.io`, `https://thingsboard.cloud` or your instance URL
    - **Authentication Type**: Choose **API Key** (recommended) or **Username / Password**
-   - **API Key**: Your ThingsBoard API key (see [API Key documentation](https://thingsboard.io/docs/user-guide/api-key/))
+   - **API Key**: Your ThingsBoard API key (see [API Key documentation](https://thingsboard.io/docs/user-guide/security/api-keys/))
 2. Add the ThingsBoard node to your workflow
 3. Select a resource (Device, Asset, etc.) and operation
 
@@ -92,7 +92,7 @@ Before using the ThingsBoard node, configure your connection credentials:
 | **Authentication Type** | Select **API Key** | |
 | **API Key** | Your ThingsBoard API key | `your-api-key-here` |
 
-To create an API key, go to your ThingsBoard instance → **API Keys** and generate a new key. See the [API Key documentation](https://thingsboard.io/docs/user-guide/api-key/) for details.
+To create an API key, go to your ThingsBoard instance → **API Keys** and generate a new key. See the [API Key documentation](https://thingsboard.io/docs/user-guide/security/api-keys/) for details.
 
 #### Option B: Username / Password
 
