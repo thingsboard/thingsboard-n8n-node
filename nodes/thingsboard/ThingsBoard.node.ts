@@ -1,8 +1,5 @@
 import {
-	ICredentialTestFunctions,
-	ICredentialsDecrypted,
 	IExecuteFunctions,
-	INodeCredentialTestResult,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
@@ -1789,47 +1786,6 @@ export class ThingsBoard implements INodeType {
 				displayOptions: { show: { resource: ['dashboard'], operation: ['getCustomerDashboards'] } },
 			},
 		],
-	};
-
-	methods = {
-		credentialTest: {
-			async thingsBoardApiTest(
-				this: ICredentialTestFunctions,
-				credential: ICredentialsDecrypted,
-			): Promise<INodeCredentialTestResult> {
-				const { baseUrl, authType, username, password, apiKey } =
-					credential.data as Record<string, string>;
-				const normalizedBaseUrl = (baseUrl || '').replace(/\/+$/g, '');
-
-				try {
-					if (authType === 'apiKey') {
-						await this.helpers.request({
-							method: 'GET',
-							uri: `${normalizedBaseUrl}/api/auth/user`,
-							headers: { 'X-Authorization': `ApiKey ${apiKey}` },
-							json: true,
-						});
-					} else {
-						await this.helpers.request({
-							method: 'POST',
-							uri: `${normalizedBaseUrl}/api/auth/login`,
-							body: { username, password },
-							json: true,
-						});
-					}
-				} catch (error: any) {
-					return {
-						status: 'Error',
-						message: `Connection failed: ${error.message}`,
-					};
-				}
-
-				return {
-					status: 'OK',
-					message: 'Connection successful',
-				};
-			},
-		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {

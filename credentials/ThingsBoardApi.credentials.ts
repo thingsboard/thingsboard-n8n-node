@@ -1,4 +1,5 @@
 import type {
+	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -71,5 +72,18 @@ export class ThingsBoardApi implements ICredentialType {
 		},
 	];
 
-	testedBy = 'thingsBoardApiTest';
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL: '={{$credentials.baseUrl}}',
+			url: '={{$credentials.authType === "apiKey" ? "/api/auth/user" : "/api/auth/login"}}',
+			method: '={{$credentials.authType === "apiKey" ? "GET" : "POST"}}' as any,
+			headers: {
+				'X-Authorization': '={{$credentials.authType === "apiKey" ? "ApiKey " + $credentials.apiKey : ""}}',
+			},
+			body: {
+				username: '={{$credentials.username}}',
+				password: '={{$credentials.password}}',
+			},
+		},
+	};
 }
