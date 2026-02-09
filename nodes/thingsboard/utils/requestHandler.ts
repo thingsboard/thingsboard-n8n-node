@@ -20,7 +20,7 @@ export async function makeThingsBoardRequest(
 		method,
 		url: `${baseUrl}${endpoint}`,
 		headers: {
-			'X-Authorization': `Bearer ${token}`,
+			'X-Authorization': token,
 		},
 		json: true,
 		returnFullResponse: true,
@@ -75,31 +75,54 @@ export async function makeThingsBoardRequest(
  */
 export async function getThingsBoardCredentials(
 	executeFunctions: IExecuteFunctions,
-): Promise<{ baseUrl: string; username: string; password: string }> {
+): Promise<{ baseUrl: string; authType: string; apiKey: string; username: string; password: string }> {
 	const credentials = await executeFunctions.getCredentials('thingsBoardApi');
 
 	if (!credentials || !credentials.baseUrl) {
 		throw new NodeOperationError(
 			executeFunctions.getNode(),
-			'ThingsBoard credential `baseUrl` is missing. Open the node credentials and set the base URL (e.g. http://localhost:8080)',
+			'ThingsBoard credential `baseUrl` is missing. Open the node credentials and set the base URL (e.g. https://thingsboard.cloud/)',
 		);
 	}
 
 	return {
 		baseUrl: (credentials.baseUrl as string).replace(/\/+$/g, ''),
+		authType: (credentials.authType as string) || 'usernamePassword',
+		apiKey: (credentials.apiKey as string) || '',
 		username: credentials.username as string,
 		password: credentials.password as string,
 	};
 }
 
-/**
- * Get access token with caching
- */
-export async function getAccessToken(executeFunctions: IExecuteFunctions): Promise<string> {
+export async function getAuthToken(executeFunctions: IExecuteFunctions): Promise<string> {
 	const staticData = executeFunctions.getWorkflowStaticData('node');
 	const credentials = await getThingsBoardCredentials(executeFunctions);
 
-	// Check for cached token
+	// API Key auth: return header value directly, no login needed
+	if (credentials.authType === 'apiKey') {
+		const authHeaderValue = `ApiKey ${credentials.apiKey}`;
+
+		// Detect edition once per workflow run
+		if (!staticData.edition) {
+			try {
+				const systemInfo = await executeFunctions.helpers.httpRequest({
+					method: 'GET',
+					url: `${credentials.baseUrl}/api/system/info`,
+					headers: { 'X-Authorization': authHeaderValue },
+					json: true,
+				});
+
+				const edition = systemInfo.edition || 'CE';
+				staticData.edition = edition === 'PAAS' ? 'PE' : edition;
+			} catch {
+				staticData.edition = 'CE';
+			}
+		}
+
+		return authHeaderValue;
+	}
+
+	// Username/Password auth: JWT flow with caching
 	const now = Date.now();
 	const cachedToken = staticData.token as string | undefined;
 	const tokenExpiry = staticData.tokenExpiry as number | undefined;
@@ -120,17 +143,19 @@ export async function getAccessToken(executeFunctions: IExecuteFunctions): Promi
 			json: true,
 		});
 
-		const token = authResponse.token as string;
+		const jwt = authResponse.token as string;
 
-		if (!token) {
+		if (!jwt) {
 			throw new NodeOperationError(
 				executeFunctions.getNode(),
 				'Failed to authenticate with ThingsBoard: No token received',
 			);
 		}
 
+		const authHeaderValue = `Bearer ${jwt}`;
+
 		// Cache token (expires in 20 minutes)
-		staticData.token = token;
+		staticData.token = authHeaderValue;
 		staticData.tokenExpiry = now + 20 * 60 * 1000;
 
 		// Try to get edition info
@@ -138,7 +163,7 @@ export async function getAccessToken(executeFunctions: IExecuteFunctions): Promi
 			const systemInfo = await executeFunctions.helpers.httpRequest({
 				method: 'GET',
 				url: `${credentials.baseUrl}/api/system/info`,
-				headers: { 'X-Authorization': `Bearer ${token}` },
+				headers: { 'X-Authorization': authHeaderValue },
 				json: true,
 			});
 
@@ -150,7 +175,7 @@ export async function getAccessToken(executeFunctions: IExecuteFunctions): Promi
 			staticData.edition = 'CE';
 		}
 
-		return token;
+		return authHeaderValue;
 	} catch (error: any) {
 		throw new NodeOperationError(
 			executeFunctions.getNode(),

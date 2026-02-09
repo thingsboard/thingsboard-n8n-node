@@ -1,5 +1,8 @@
 import {
+	ICredentialTestFunctions,
+	ICredentialsDecrypted,
 	IExecuteFunctions,
+	INodeCredentialTestResult,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
@@ -7,7 +10,7 @@ import {
 
 // Import refactored utilities and handlers
 import {
-	getAccessToken,
+	getAuthToken,
 	getThingsBoardCredentials,
 	checkEditionSupport,
 } from './utils/requestHandler';
@@ -1788,6 +1791,47 @@ export class ThingsBoard implements INodeType {
 		],
 	};
 
+	methods = {
+		credentialTest: {
+			async thingsBoardApiTest(
+				this: ICredentialTestFunctions,
+				credential: ICredentialsDecrypted,
+			): Promise<INodeCredentialTestResult> {
+				const { baseUrl, authType, username, password, apiKey } =
+					credential.data as Record<string, string>;
+				const normalizedBaseUrl = (baseUrl || '').replace(/\/+$/g, '');
+
+				try {
+					if (authType === 'apiKey') {
+						await this.helpers.request({
+							method: 'GET',
+							uri: `${normalizedBaseUrl}/api/auth/user`,
+							headers: { 'X-Authorization': `ApiKey ${apiKey}` },
+							json: true,
+						});
+					} else {
+						await this.helpers.request({
+							method: 'POST',
+							uri: `${normalizedBaseUrl}/api/auth/login`,
+							body: { username, password },
+							json: true,
+						});
+					}
+				} catch (error: any) {
+					return {
+						status: 'Error',
+						message: `Connection failed: ${error.message}`,
+					};
+				}
+
+				return {
+					status: 'OK',
+					message: 'Connection successful',
+				};
+			},
+		},
+	};
+
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const results: INodeExecutionData[] = [];
@@ -1802,7 +1846,7 @@ export class ThingsBoard implements INodeType {
 				const baseUrl = credentials.baseUrl;
 
 				// Get access token (with caching)
-				const token = await getAccessToken(this);
+				const token = await getAuthToken(this);
 
 				// Check if operation is supported in current edition
 				checkEditionSupport(this, resource, operation, PE_ONLY_OPERATIONS);
@@ -1819,7 +1863,7 @@ export class ThingsBoard implements INodeType {
 				const handler = ResourceRegistry.getHandler(resource);
 				const result = await handler.execute(context, operation);
 
-				results.push({ json: result });
+				results.push({ json: result, pairedItem: { item: i } });
 			} catch (error) {
 				// Re-throw errors to be handled by n8n's error handling
 				if (this.continueOnFail()) {

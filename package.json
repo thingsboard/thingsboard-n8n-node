@@ -1,6 +1,6 @@
 {
   "name": "@thingsboard/n8n-nodes-thingsboard",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "n8n node for ThingsBoard",
   "keywords": [
     "n8n",
@@ -53,8 +53,7 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "n8n-core": "^1.0.0",
-    "n8n-workflow": "^1.0.0"
+    "n8n-workflow": "*"
   },
   "dependencies": {},
   "overrides": {

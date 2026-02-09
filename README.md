@@ -31,13 +31,12 @@ npm install @thingsboard/n8n-nodes-thingsboard
 
 ### Configuration
 
-1. Get your ThingsBoard credentials (URL, username, password)
-2. In n8n, add ThingsBoard credentials:
+1. In n8n, add ThingsBoard credentials:
    - **Base URL**: `https://demo.thingsboard.io`, `https://thingsboard.cloud` or your instance URL
-   - **Username**: Your ThingsBoard login
-   - **Password**: Your ThingsBoard password
-3. Add the ThingsBoard node to your workflow
-4. Select a resource (Device, Asset, etc.) and operation
+   - **Authentication Type**: Choose **API Key** (recommended) or **Username / Password**
+   - **API Key**: Your ThingsBoard API key (see [API Key documentation](https://thingsboard.io/docs/user-guide/api-key/))
+2. Add the ThingsBoard node to your workflow
+3. Select a resource (Device, Asset, etc.) and operation
 
 
 ## 📦 Installation
@@ -85,9 +84,22 @@ Before using the ThingsBoard node, configure your connection credentials:
 2. Search for **"ThingsBoard API"**
 3. Fill in the required fields:
 
+#### Option A: API Key (recommended)
+
 | Field | Description | Example |
 |-------|-------------|---------|
-| **Base URL** | ThingsBoard instance URL (without trailing slash) | `https://demo.thingsboard.io` or `https://thingsboard.cloud` |
+| **Base URL** | ThingsBoard instance URL | `https://demo.thingsboard.io` or `https://thingsboard.cloud` |
+| **Authentication Type** | Select **API Key** | |
+| **API Key** | Your ThingsBoard API key | `your-api-key-here` |
+
+To create an API key, go to your ThingsBoard instance → **API Keys** and generate a new key. See the [API Key documentation](https://thingsboard.io/docs/user-guide/api-key/) for details.
+
+#### Option B: Username / Password
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Base URL** | ThingsBoard instance URL | `https://demo.thingsboard.io` or `https://thingsboard.cloud` |
+| **Authentication Type** | Select **Username / Password** | |
 | **Username** | Your ThingsBoard account email | `tenant@thingsboard.org` |
 | **Password** | Your ThingsBoard account password | `tenant` |
 

@@ -1,5 +1,4 @@
 import type {
-	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -17,11 +16,32 @@ export class ThingsBoardApi implements ICredentialType {
 			required: true,
 		},
 		{
+			displayName: 'Authentication Type',
+			name: 'authType',
+			type: 'options',
+			options: [
+				{
+					name: 'API Key',
+					value: 'apiKey',
+				},
+				{
+					name: 'Username / Password',
+					value: 'usernamePassword',
+				},
+			],
+			default: 'apiKey',
+		},
+		{
 			displayName: 'Username',
 			name: 'username',
 			type: 'string',
 			default: '',
 			required: true,
+			displayOptions: {
+				show: {
+					authType: ['usernamePassword'],
+				},
+			},
 		},
 		{
 			displayName: 'Password',
@@ -30,18 +50,26 @@ export class ThingsBoardApi implements ICredentialType {
 			typeOptions: { password: true },
 			default: '',
 			required: true,
+			displayOptions: {
+				show: {
+					authType: ['usernamePassword'],
+				},
+			},
+		},
+		{
+			displayName: 'API Key',
+			name: 'apiKey',
+			type: 'string',
+			typeOptions: { password: true },
+			default: '',
+			required: true,
+			displayOptions: {
+				show: {
+					authType: ['apiKey'],
+				},
+			},
 		},
 	];
 
-	test: ICredentialTestRequest = {
-		request: {
-			baseURL: '={{$credentials.baseUrl}}',
-			url: '/api/auth/login',
-			method: 'POST',
-			body: {
-				username: '={{$credentials.username}}',
-				password: '={{$credentials.password}}',
-			},
-		},
-	};
+	testedBy = 'thingsBoardApiTest';
 }

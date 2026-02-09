@@ -9,6 +9,8 @@ import { IExecuteFunctions } from 'n8n-workflow';
  */
 export interface IThingsBoardCredentials {
 	baseUrl: string;
+	authType: 'usernamePassword' | 'apiKey';
+	apiKey: string;
 	username: string;
 	password: string;
 }
@@ -81,9 +83,6 @@ export interface IEntityWithCustomer {
 	};
 }
 
-/**
- * Dashboard structure
- */
 export interface IDashboard {
 	title: string;
 	[key: string]: any;
