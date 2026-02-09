@@ -35,7 +35,7 @@ export class DashboardResource implements IResourceHandler {
 	}
 
 	private async createDashboard(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const mode = getOptionalParam(
 			executeFunctions,
 			'dashboardInputMode',
@@ -60,12 +60,12 @@ export class DashboardResource implements IResourceHandler {
 				body,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getDashboardById(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const dashboardId = validateRequired(executeFunctions, 'dashboardId', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -75,12 +75,12 @@ export class DashboardResource implements IResourceHandler {
 				endpoint: `/api/dashboard/${dashboardId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async deleteDashboard(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const dashboardId = validateRequired(executeFunctions, 'dashboardId', itemIndex);
 
 		await makeThingsBoardRequest(
@@ -90,14 +90,14 @@ export class DashboardResource implements IResourceHandler {
 				endpoint: `/api/dashboard/${dashboardId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { deleted: true };
 	}
 
 	private async getDashboards(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'dashboard');
 		const qs = paginationToQueryString(paginationParams);
@@ -120,12 +120,12 @@ export class DashboardResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getCustomerDashboards(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const customerId = validateRequired(executeFunctions, 'customerIdRequired', itemIndex);
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'dashboard');
@@ -149,12 +149,12 @@ export class DashboardResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getUserDashboards(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'dashboard');
 		const qs = paginationToQueryString(paginationParams);
@@ -185,7 +185,7 @@ export class DashboardResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 }

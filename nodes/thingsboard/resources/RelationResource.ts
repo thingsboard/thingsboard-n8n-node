@@ -32,7 +32,7 @@ export class RelationResource implements IResourceHandler {
 	}
 
 	private async getRelation(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const fromId = validateRequired(executeFunctions, 'fromId', itemIndex);
 		const fromType = validateRequired(executeFunctions, 'fromType', itemIndex);
@@ -57,12 +57,12 @@ export class RelationResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async findByFrom(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const fromId = validateRequired(executeFunctions, 'fromId', itemIndex);
 		const fromType = validateRequired(executeFunctions, 'fromType', itemIndex);
@@ -81,12 +81,12 @@ export class RelationResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async findByFromWithRelationType(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const fromId = validateRequired(executeFunctions, 'fromId', itemIndex);
 		const fromType = validateRequired(executeFunctions, 'fromType', itemIndex);
@@ -107,12 +107,12 @@ export class RelationResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async findByTo(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const toId = validateRequired(executeFunctions, 'toId', itemIndex);
 		const toType = validateRequired(executeFunctions, 'toType', itemIndex);
@@ -131,12 +131,12 @@ export class RelationResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async findByToWithRelationType(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const toId = validateRequired(executeFunctions, 'toId', itemIndex);
 		const toType = validateRequired(executeFunctions, 'toType', itemIndex);
@@ -157,12 +157,12 @@ export class RelationResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async findInfoByFrom(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const fromId = validateRequired(executeFunctions, 'fromId', itemIndex);
 		const fromType = validateRequired(executeFunctions, 'fromType', itemIndex);
@@ -181,12 +181,12 @@ export class RelationResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async findInfoByTo(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const toId = validateRequired(executeFunctions, 'toId', itemIndex);
 		const toType = validateRequired(executeFunctions, 'toType', itemIndex);
@@ -205,7 +205,7 @@ export class RelationResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 }

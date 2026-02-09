@@ -42,7 +42,7 @@ export class AssetResource implements IResourceHandler {
 	}
 
 	private async getAssetById(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const assetId = validateRequired(executeFunctions, 'assetId', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -52,12 +52,12 @@ export class AssetResource implements IResourceHandler {
 				endpoint: `/api/asset/${assetId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async createAsset(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const mode = getOptionalParam(
 			executeFunctions,
 			'assetInputMode',
@@ -86,12 +86,12 @@ export class AssetResource implements IResourceHandler {
 				body,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async deleteAsset(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const assetId = validateRequired(executeFunctions, 'assetId', itemIndex);
 
 		await makeThingsBoardRequest(
@@ -101,14 +101,14 @@ export class AssetResource implements IResourceHandler {
 				endpoint: `/api/asset/${assetId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { deleted: true };
 	}
 
 	private async getTenantAsset(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const assetName = validateRequired(executeFunctions, 'assetName', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -119,12 +119,12 @@ export class AssetResource implements IResourceHandler {
 				qs: { assetName },
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getTenantAssets(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'asset');
 		const qs = paginationToQueryString(paginationParams);
@@ -142,12 +142,12 @@ export class AssetResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getCustomerAssets(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const customerId = validateRequired(executeFunctions, 'customerIdRequired', itemIndex);
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'asset');
@@ -166,12 +166,12 @@ export class AssetResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getUserAssets(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'asset');
 		const qs = paginationToQueryString(paginationParams);
@@ -189,12 +189,12 @@ export class AssetResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getAssetsByEntityGroupId(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const entityGroupId = validateRequired(executeFunctions, 'entityGroupId', itemIndex);
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'asset');
@@ -208,7 +208,7 @@ export class AssetResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 }

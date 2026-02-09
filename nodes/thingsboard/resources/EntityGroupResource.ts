@@ -26,7 +26,7 @@ export class EntityGroupResource implements IResourceHandler {
 	}
 
 	private async getEntityGroupById(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const entityGroupId = validateRequired(executeFunctions, 'entityGroupId', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -36,12 +36,12 @@ export class EntityGroupResource implements IResourceHandler {
 				endpoint: `/api/entityGroup/${entityGroupId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getEntityGroupsByType(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const groupType = validateRequired(executeFunctions, 'groupType', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -51,12 +51,12 @@ export class EntityGroupResource implements IResourceHandler {
 				endpoint: `/api/entityGroups/${groupType}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getEntityGroupByOwnerAndNameAndType(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const ownerType = validateRequired(executeFunctions, 'ownerType', itemIndex);
 		const ownerId = validateRequired(executeFunctions, 'ownerId', itemIndex);
@@ -70,12 +70,12 @@ export class EntityGroupResource implements IResourceHandler {
 				endpoint: `/api/entityGroup/${ownerType}/${ownerId}/${groupType}/${encodeURIComponent(groupName)}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getEntityGroupsByOwnerAndType(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const ownerType = validateRequired(executeFunctions, 'ownerType', itemIndex);
 		const ownerId = validateRequired(executeFunctions, 'ownerId', itemIndex);
@@ -88,12 +88,12 @@ export class EntityGroupResource implements IResourceHandler {
 				endpoint: `/api/entityGroups/${ownerType}/${ownerId}/${groupType}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getEntityGroupsForEntity(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const groupType = validateRequired(executeFunctions, 'groupType', itemIndex);
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -105,7 +105,7 @@ export class EntityGroupResource implements IResourceHandler {
 				endpoint: `/api/entityGroups/${groupType}/${entityId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 }

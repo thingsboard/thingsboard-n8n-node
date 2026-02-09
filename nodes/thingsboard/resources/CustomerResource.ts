@@ -32,7 +32,7 @@ export class CustomerResource implements IResourceHandler {
 	}
 
 	private async getCustomerById(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const customerId = validateRequired(executeFunctions, 'customerIdRequired', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -42,12 +42,12 @@ export class CustomerResource implements IResourceHandler {
 				endpoint: `/api/customer/${customerId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async createCustomer(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const title = validateRequired(executeFunctions, 'customerTitle', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -58,12 +58,12 @@ export class CustomerResource implements IResourceHandler {
 				body: { title },
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async deleteCustomer(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const customerId = validateRequired(executeFunctions, 'customerIdRequired', itemIndex);
 
 		await makeThingsBoardRequest(
@@ -73,14 +73,14 @@ export class CustomerResource implements IResourceHandler {
 				endpoint: `/api/customer/${customerId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { deleted: true };
 	}
 
 	private async getCustomers(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'customer');
 		const qs = paginationToQueryString(paginationParams);
@@ -93,12 +93,12 @@ export class CustomerResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getTenantCustomer(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const customerTitle = validateRequired(executeFunctions, 'customerTitle', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -109,12 +109,12 @@ export class CustomerResource implements IResourceHandler {
 				qs: { customerTitle },
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getCustomersByEntityGroupId(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const entityGroupId = validateRequired(executeFunctions, 'entityGroupId', itemIndex);
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'customer');
@@ -128,12 +128,12 @@ export class CustomerResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getUserCustomers(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'customer');
 		const qs = paginationToQueryString(paginationParams);
@@ -146,7 +146,7 @@ export class CustomerResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 }

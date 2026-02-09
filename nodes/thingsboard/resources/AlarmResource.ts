@@ -30,7 +30,7 @@ export class AlarmResource implements IResourceHandler {
 	}
 
 	private async getAlarmById(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const alarmId = validateRequired(executeFunctions, 'alarmId', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -40,12 +40,12 @@ export class AlarmResource implements IResourceHandler {
 				endpoint: `/api/alarm/${alarmId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getAlarmInfoById(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const alarmId = validateRequired(executeFunctions, 'alarmId', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -55,12 +55,12 @@ export class AlarmResource implements IResourceHandler {
 				endpoint: `/api/alarm/info/${alarmId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getAlarms(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = validateRequired(executeFunctions, 'alarmEntityType', itemIndex);
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -93,12 +93,12 @@ export class AlarmResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getAllAlarms(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'alarm');
 		const qs = paginationToQueryString(paginationParams);
@@ -130,12 +130,12 @@ export class AlarmResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getHighestAlarmSeverity(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const alarmEntityType = getOptionalParam(executeFunctions, 'alarmEntityType', itemIndex, '');
 		const entityType =
@@ -157,12 +157,12 @@ export class AlarmResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getAlarmTypes(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'alarm');
 		const qs = paginationToQueryString(paginationParams);
@@ -175,7 +175,7 @@ export class AlarmResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 }

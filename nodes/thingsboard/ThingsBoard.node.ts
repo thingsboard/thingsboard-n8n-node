@@ -3,12 +3,12 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	NodeConnectionTypes,
 } from 'n8n-workflow';
 
 // Import refactored utilities and handlers
 import {
-	getAuthToken,
-	getThingsBoardCredentials,
+	detectEdition,
 	checkEditionSupport,
 } from './utils/requestHandler';
 import { IOperationContext } from './utils/types';
@@ -45,12 +45,33 @@ export class ThingsBoard implements INodeType {
 		version: 1,
 		description: 'Interact with ThingsBoard REST API',
 		defaults: { name: 'ThingsBoard' },
-		inputs: ['main'] as any,
-		outputs: ['main'] as any,
-		credentials: [{ name: 'thingsBoardApi', required: true }],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
+		credentials: [
+			{
+				name: 'thingsBoardApiKeyApi',
+				required: true,
+				displayOptions: { show: { authentication: ['apiKey'] } },
+			},
+			{
+				name: 'thingsBoardUsernamePasswordApi',
+				required: true,
+				displayOptions: { show: { authentication: ['usernamePassword'] } },
+			},
+		],
 		usableAsTool: true,
 		documentationUrl: 'https://thingsboard.io/docs/samples/analytics/n8n-node/',
 		properties: [
+			{
+				displayName: 'Authentication',
+				name: 'authentication',
+				type: 'options',
+				options: [
+					{ name: 'API Key', value: 'apiKey' },
+					{ name: 'Username / Password', value: 'usernamePassword' },
+				],
+				default: 'apiKey',
+			},
 			{
 				displayName: 'Resource',
 				name: 'resource',
@@ -1797,12 +1818,19 @@ export class ThingsBoard implements INodeType {
 				const resource = this.getNodeParameter('resource', i) as string;
 				const operation = this.getNodeParameter('operation', i) as string;
 
-				// Get credentials and validate
-				const credentials = await getThingsBoardCredentials(this);
-				const baseUrl = credentials.baseUrl;
+				// Determine credential type from authentication parameter
+				const authType = this.getNodeParameter('authentication', i) as string;
+				const credentialType =
+					authType === 'usernamePassword'
+						? 'thingsBoardUsernamePasswordApi'
+						: 'thingsBoardApiKeyApi';
 
-				// Get access token (with caching)
-				const token = await getAuthToken(this);
+				// Get baseUrl from credentials
+				const credentials = await this.getCredentials(credentialType);
+				const baseUrl = (credentials.baseUrl as string).replace(/\/+$/g, '');
+
+				// Detect edition (cached per workflow run)
+				await detectEdition(this, credentialType, baseUrl);
 
 				// Check if operation is supported in current edition
 				checkEditionSupport(this, resource, operation, PE_ONLY_OPERATIONS);
@@ -1812,7 +1840,7 @@ export class ThingsBoard implements INodeType {
 					executeFunctions: this,
 					itemIndex: i,
 					baseUrl,
-					token,
+					credentialType,
 				};
 
 				// Get resource handler and execute operation

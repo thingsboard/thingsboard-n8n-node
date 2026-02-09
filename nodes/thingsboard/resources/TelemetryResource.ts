@@ -50,7 +50,7 @@ export class TelemetryResource implements IResourceHandler {
 	}
 
 	private async getTimeseries(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -101,12 +101,12 @@ export class TelemetryResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getTimeseriesKeys(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -118,14 +118,14 @@ export class TelemetryResource implements IResourceHandler {
 				endpoint: `/api/plugins/telemetry/${entityType}/${entityId}/keys/timeseries`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { timeseriesKeys: result };
 	}
 
 	private async getLatestTimeseries(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -150,12 +150,12 @@ export class TelemetryResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getAttributes(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -172,12 +172,12 @@ export class TelemetryResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getAttributeKeys(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -189,14 +189,14 @@ export class TelemetryResource implements IResourceHandler {
 				endpoint: `/api/plugins/telemetry/${entityType}/${entityId}/keys/attributes`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { attributeKeys: result };
 	}
 
 	private async getAttributeKeysByScope(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -209,14 +209,14 @@ export class TelemetryResource implements IResourceHandler {
 				endpoint: `/api/plugins/telemetry/${entityType}/${entityId}/keys/attributes/${scope}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { attributeKeys: result };
 	}
 
 	private async saveEntityAttributes(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -231,14 +231,14 @@ export class TelemetryResource implements IResourceHandler {
 				body: attributesJson,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { status: 'Entity attributes saved successfully' };
 	}
 
 	private async saveDeviceAttributes(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const deviceId = validateRequired(executeFunctions, 'deviceId', itemIndex);
 		const scope = getOptionalParam(executeFunctions, 'scope', itemIndex, 'SERVER_SCOPE');
@@ -252,14 +252,14 @@ export class TelemetryResource implements IResourceHandler {
 				body: attributesJson,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { status: 'Device attributes saved successfully' };
 	}
 
 	private async saveEntityTelemetry(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -273,14 +273,14 @@ export class TelemetryResource implements IResourceHandler {
 				body: telemetryJson,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { status: 'Telemetry submitted successfully' };
 	}
 
 	private async saveEntityTelemetryWithTTL(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -295,14 +295,14 @@ export class TelemetryResource implements IResourceHandler {
 				body: telemetryJson,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { status: 'Telemetry with TTL submitted successfully' };
 	}
 
 	private async deleteEntityAttributes(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -321,14 +321,14 @@ export class TelemetryResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { status: 'Entity attributes deleted successfully' };
 	}
 
 	private async deleteDeviceAttributes(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const deviceId = validateRequired(executeFunctions, 'deviceId', itemIndex);
 		const scope = getOptionalParam(executeFunctions, 'scope', itemIndex, 'SERVER_SCOPE');
@@ -346,14 +346,14 @@ export class TelemetryResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { status: 'Device attributes deleted successfully' };
 	}
 
 	private async deleteEntityTimeseries(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const entityType = getOptionalParam(executeFunctions, 'entityType', itemIndex, 'DEVICE');
 		const entityId = validateRequired(executeFunctions, 'entityId', itemIndex);
@@ -405,7 +405,7 @@ export class TelemetryResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { status: 'Entity timeseries deleted successfully' };

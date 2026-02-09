@@ -4,33 +4,15 @@
 	"codexVersion": "1.0",
 	"categories": ["Miscellaneous"],
 	"resources": {
-		"credentialDocumentation": [
-			{
-				"url": ""
-			}
-		],
 		"primaryDocumentation": [
 			{
-				"url": ""
+				"url": "https://thingsboard.io/docs/samples/analytics/n8n-node/"
+			}
+		],
+		"credentialDocumentation": [
+			{
+				"url": "https://thingsboard.io/docs/reference/rest-api/"
 			}
 		]
-	},
-	"displayName": "ThingsBoard",
-	"name": "thingsBoard",
-	"icon": "",
-	"group": ["transform"],
-	"version": 1,
-	"description": "Interact with ThingsBoard REST API",
-	"defaults": {
-		"name": "ThingsBoard"
-	},
-	"inputs": ["main"],
-	"outputs": ["main"],
-	"credentials": [
-		{
-			"name": "thingsBoardApi",
-			"required": true
-		}
-	],
-	"properties": []
+	}
 }

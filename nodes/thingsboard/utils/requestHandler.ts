@@ -1,6 +1,6 @@
 /**
  * Centralized HTTP request handler for ThingsBoard API
- * Provides proper error handling and eliminates code duplication
+ * Uses httpRequestWithAuthentication for n8n-managed auth
  */
 import { IExecuteFunctions, IHttpRequestOptions, NodeOperationError } from 'n8n-workflow';
 import { IThingsBoardRequestOptions } from './types';
@@ -10,7 +10,7 @@ export async function makeThingsBoardRequest(
 	executeFunctions: IExecuteFunctions,
 	options: IThingsBoardRequestOptions,
 	baseUrl: string,
-	token: string,
+	credentialType: string,
 ): Promise<any> {
 	const { method, endpoint, qs, body } = options;
 
@@ -19,9 +19,6 @@ export async function makeThingsBoardRequest(
 	const requestOptions: IHttpRequestOptions = {
 		method,
 		url: `${baseUrl}${endpoint}`,
-		headers: {
-			'X-Authorization': token,
-		},
 		json: true,
 		returnFullResponse: true,
 	};
@@ -35,7 +32,11 @@ export async function makeThingsBoardRequest(
 	}
 
 	try {
-		const response = await executeFunctions.helpers.httpRequest(requestOptions);
+		const response = await executeFunctions.helpers.httpRequestWithAuthentication.call(
+			executeFunctions,
+			credentialType,
+			requestOptions,
+		);
 
 		if (response.statusCode >= 400) {
 			const errorMessage =
@@ -50,16 +51,12 @@ export async function makeThingsBoardRequest(
 			);
 		}
 
-		// Return the response body
 		return response.body;
 	} catch (error: any) {
-		// Handle network errors, timeouts, etc.
 		if (error.message?.includes('ThingsBoard API error')) {
-			// Re-throw our formatted errors
 			throw error;
 		}
 
-		// Format unexpected errors
 		throw new NodeOperationError(
 			executeFunctions.getNode(),
 			`Failed to connect to ThingsBoard API: ${error.message}`,
@@ -71,119 +68,37 @@ export async function makeThingsBoardRequest(
 }
 
 /**
- * Get ThingsBoard credentials and validate
+ * Detect ThingsBoard edition (CE or PE) via /api/system/info
+ * Result is cached in workflow static data for the lifetime of the execution.
  */
-export async function getThingsBoardCredentials(
+export async function detectEdition(
 	executeFunctions: IExecuteFunctions,
-): Promise<{ baseUrl: string; authType: string; apiKey: string; username: string; password: string }> {
-	const credentials = await executeFunctions.getCredentials('thingsBoardApi');
-
-	if (!credentials || !credentials.baseUrl) {
-		throw new NodeOperationError(
-			executeFunctions.getNode(),
-			'ThingsBoard credential `baseUrl` is missing. Open the node credentials and set the base URL (e.g. https://thingsboard.cloud/)',
-		);
-	}
-
-	return {
-		baseUrl: (credentials.baseUrl as string).replace(/\/+$/g, ''),
-		authType: (credentials.authType as string) || 'usernamePassword',
-		apiKey: (credentials.apiKey as string) || '',
-		username: credentials.username as string,
-		password: credentials.password as string,
-	};
-}
-
-export async function getAuthToken(executeFunctions: IExecuteFunctions): Promise<string> {
+	credentialType: string,
+	baseUrl: string,
+): Promise<void> {
 	const staticData = executeFunctions.getWorkflowStaticData('node');
-	const credentials = await getThingsBoardCredentials(executeFunctions);
 
-	// API Key auth: return header value directly, no login needed
-	if (credentials.authType === 'apiKey') {
-		const authHeaderValue = `ApiKey ${credentials.apiKey}`;
-
-		// Detect edition once per workflow run
-		if (!staticData.edition) {
-			try {
-				const systemInfo = await executeFunctions.helpers.httpRequest({
-					method: 'GET',
-					url: `${credentials.baseUrl}/api/system/info`,
-					headers: { 'X-Authorization': authHeaderValue },
-					json: true,
-				});
-
-				const edition = systemInfo.edition || 'CE';
-				staticData.edition = edition === 'PAAS' ? 'PE' : edition;
-			} catch {
-				staticData.edition = 'CE';
-			}
-		}
-
-		return authHeaderValue;
+	if (staticData.edition) {
+		return;
 	}
 
-	// Username/Password auth: JWT flow with caching
-	const now = Date.now();
-	const cachedToken = staticData.token as string | undefined;
-	const tokenExpiry = staticData.tokenExpiry as number | undefined;
-
-	if (cachedToken && tokenExpiry && now < tokenExpiry) {
-		return cachedToken;
-	}
-
-	// Fetch new token
 	try {
-		const authResponse = await executeFunctions.helpers.httpRequest({
-			method: 'POST',
-			url: `${credentials.baseUrl}/api/auth/login`,
-			body: {
-				username: credentials.username,
-				password: credentials.password,
-			},
+		const requestOptions: IHttpRequestOptions = {
+			method: 'GET',
+			url: `${baseUrl}/api/system/info`,
 			json: true,
-		});
+		};
 
-		const jwt = authResponse.token as string;
-
-		if (!jwt) {
-			throw new NodeOperationError(
-				executeFunctions.getNode(),
-				'Failed to authenticate with ThingsBoard: No token received',
-			);
-		}
-
-		const authHeaderValue = `Bearer ${jwt}`;
-
-		// Cache token (expires in 20 minutes)
-		staticData.token = authHeaderValue;
-		staticData.tokenExpiry = now + 20 * 60 * 1000;
-
-		// Try to get edition info
-		try {
-			const systemInfo = await executeFunctions.helpers.httpRequest({
-				method: 'GET',
-				url: `${credentials.baseUrl}/api/system/info`,
-				headers: { 'X-Authorization': authHeaderValue },
-				json: true,
-			});
-
-			const edition = systemInfo.edition || 'CE';
-			// Normalize PAAS to PE
-			staticData.edition = edition === 'PAAS' ? 'PE' : edition;
-		} catch {
-			// Default to CE if system info fails
-			staticData.edition = 'CE';
-		}
-
-		return authHeaderValue;
-	} catch (error: any) {
-		throw new NodeOperationError(
-			executeFunctions.getNode(),
-			`Failed to authenticate with ThingsBoard: ${error.message}`,
-			{
-				description: 'Check your credentials (username and password)',
-			},
+		const systemInfo = await executeFunctions.helpers.httpRequestWithAuthentication.call(
+			executeFunctions,
+			credentialType,
+			requestOptions,
 		);
+
+		const edition = systemInfo.edition || 'CE';
+		staticData.edition = edition === 'PAAS' ? 'PE' : edition;
+	} catch {
+		staticData.edition = 'CE';
 	}
 }
 

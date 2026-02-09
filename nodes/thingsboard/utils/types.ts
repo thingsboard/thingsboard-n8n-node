@@ -5,17 +5,6 @@
 import { IExecuteFunctions } from 'n8n-workflow';
 
 /**
- * ThingsBoard credentials structure
- */
-export interface IThingsBoardCredentials {
-	baseUrl: string;
-	authType: 'usernamePassword' | 'apiKey';
-	apiKey: string;
-	username: string;
-	password: string;
-}
-
-/**
  * Pagination query parameters
  */
 export interface IPaginationParams {
@@ -48,7 +37,7 @@ export interface IOperationContext {
 	executeFunctions: IExecuteFunctions;
 	itemIndex: number;
 	baseUrl: string;
-	token: string;
+	credentialType: string;
 }
 
 /**

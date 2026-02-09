@@ -42,7 +42,7 @@ export class DeviceResource implements IResourceHandler {
 	}
 
 	private async getDeviceById(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const deviceId = validateRequired(executeFunctions, 'deviceId', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -52,12 +52,12 @@ export class DeviceResource implements IResourceHandler {
 				endpoint: `/api/device/${deviceId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async createDevice(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const mode = getOptionalParam(
 			executeFunctions,
 			'deviceInputMode',
@@ -100,12 +100,12 @@ export class DeviceResource implements IResourceHandler {
 				body,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async deleteDevice(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const deviceId = validateRequired(executeFunctions, 'deviceId', itemIndex);
 
 		await makeThingsBoardRequest(
@@ -115,14 +115,14 @@ export class DeviceResource implements IResourceHandler {
 				endpoint: `/api/device/${deviceId}`,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 
 		return { deleted: true };
 	}
 
 	private async getTenantDevice(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const deviceName = validateRequired(executeFunctions, 'deviceName', itemIndex);
 
 		return await makeThingsBoardRequest(
@@ -133,12 +133,12 @@ export class DeviceResource implements IResourceHandler {
 				qs: { deviceName },
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getTenantDevices(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'device');
 		const qs = paginationToQueryString(paginationParams);
@@ -157,12 +157,12 @@ export class DeviceResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getCustomerDevices(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const customerId = validateRequired(executeFunctions, 'customerIdRequired', itemIndex);
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'device');
@@ -182,12 +182,12 @@ export class DeviceResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getUserDevices(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'device');
 		const qs = paginationToQueryString(paginationParams);
@@ -206,12 +206,12 @@ export class DeviceResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 
 	private async getDevicesByEntityGroupId(context: IOperationContext): Promise<any> {
-		const { executeFunctions, itemIndex, baseUrl, token } = context;
+		const { executeFunctions, itemIndex, baseUrl, credentialType } = context;
 		const entityGroupId = validateRequired(executeFunctions, 'entityGroupId', itemIndex);
 
 		const paginationParams = buildPaginationQuery(executeFunctions, itemIndex, 'device');
@@ -225,7 +225,7 @@ export class DeviceResource implements IResourceHandler {
 				qs,
 			},
 			baseUrl,
-			token,
+			credentialType,
 		);
 	}
 }
