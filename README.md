@@ -53,13 +53,11 @@ For self-hosted n8n instances, you can install directly via the web interface:
 6. Wait for installation to complete
 7. Refresh your browser
 
-**Note**: This method requires owner/admin permissions and is only available for self-hosted n8n (not n8n Cloud).
+**Note**: This method requires owner/admin permissions.
 
 ### n8n Cloud
 
-The ThingsBoard node requires verification to be available on n8n Cloud. n8n Cloud supports a select group of verified community nodes included in their official catalog.
-
-**Current Status**: Until the node is verified and included in the Cloud-available catalog, use self-hosted n8n (local or Docker) with any installation method above.
+The ThingsBoard node is verified and available on n8n Cloud.
 
 ## 🔧 Verify Installation
 
